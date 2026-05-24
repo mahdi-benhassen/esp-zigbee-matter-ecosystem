@@ -1,0 +1,103 @@
+# Gateway Configuration - Dual-SoC ESP32-S3 + ESP32-H2
+
+menu "Gateway Configuration (Dual-SoC)"
+
+    comment "===== Wi-Fi Configuration ====="
+
+    config WIFI_SSID
+        string "Wi-Fi SSID"
+        default "your-ssid"
+        help
+            Wi-Fi network name (SSID) for the gateway to connect to.
+
+    config WIFI_PASSWORD
+        string "Wi-Fi Password"
+        default "your-password"
+        help
+            Wi-Fi password (WPA2 or WPA3).
+
+    comment "===== ESP32-H2 RCP (Radio Co-Processor) ====="
+    comment "UART wiring: S3 TX -> H2 RX, S3 RX <- H2 TX"
+
+    config ZB_UART_PORT
+        int "RCP UART Port"
+        default 1
+        range 1 2
+        help
+            UART port number for ESP32-H2 RCP communication.
+            UART1 or UART2. UART0 is reserved for debug console.
+
+    config ZB_UART_TX_PIN
+        int "RCP UART TX Pin (S3 -> H2)"
+        default 5
+        range 0 48
+        help
+            ESP32-S3 GPIO pin for UART TX to ESP32-H2.
+            Recommended: GPIO5 (UART1 default TX).
+
+    config ZB_UART_RX_PIN
+        int "RCP UART RX Pin (S3 <- H2)"
+        default 4
+        range 0 48
+        help
+            ESP32-S3 GPIO pin for UART RX from ESP32-H2.
+            Recommended: GPIO4 (UART1 default RX).
+
+    config ZB_UART_BAUDRATE
+        int "RCP UART Baud Rate"
+        default 115200
+        range 9600 921600
+        help
+            UART baud rate for RCP communication.
+            Must match ESP32-H2 RCP firmware baud rate.
+            Default 115200. Try 460800 for higher throughput.
+
+    comment "===== Zigbee Network Configuration ====="
+
+    config ZB_CHANNEL
+        int "Zigbee Channel"
+        default 13
+        range 11 26
+        help
+            Zigbee radio channel (11-26).
+            Channel 13 avoids common Wi-Fi interference.
+
+    config ZB_PANID
+        hex "Zigbee PAN ID"
+        default 0x1A62
+        range 0x0000 0xFFFF
+        help
+            Personal Area Network ID. Unique per network.
+
+    config ZB_EXTPANID
+        string "Zigbee Extended PAN ID"
+        default "ESP_ZB_GW01"
+        help
+            Extended PAN identifier (8 bytes ASCII).
+
+    config ZB_MAX_CHILDREN
+        int "Maximum Child Nodes"
+        default 32
+        range 1 64
+        help
+            Maximum number of end devices that can join.
+
+    comment "===== Web Server (Stage 2) ====="
+
+    config GATEWAY_WEB_SERVER_PORT
+        int "HTTP Server Port"
+        default 80
+        range 1 65535
+        help
+            TCP port for the management web server.
+
+    comment "===== Diagnostics ====="
+
+    config GATEWAY_LOG_LEVEL
+        int "Log Verbosity"
+        default 3
+        range 0 5
+        help
+            0=NONE, 1=ERROR, 2=WARN, 3=INFO, 4=DEBUG, 5=VERBOSE
+
+endmenu

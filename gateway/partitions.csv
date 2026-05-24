@@ -1,0 +1,19 @@
+# Name,     Type,    SubType,   Offset,    Size,      Flags
+# ESP32-S3 Gateway Partition Table (8MB Flash)
+# Layout: Factory + OTA + WebFS + ZB Storage + CoreDump
+
+nvs,        data,    nvs,       0x9000,    0x8000,
+phy_init,   data,    phy,       0x11000,   0x1000,
+# Factory firmware
+factory,    app,     factory,   0x20000,   0x200000,
+# OTA partitions (A/B for zero-downtime updates)
+ota_0,      app,     ota_0,     0x220000,  0x200000,
+ota_1,      app,     ota_1,     0x420000,  0x200000,
+# Web dashboard files (SPIFFS) - Stage 4
+webfs,      data,    spiffs,    0x620000,  0x160000,
+# Persistent data storage
+storage,    data,    fat,       0x780000,  0x60000,
+# Zigbee/Matter network persistent data
+zb_storage, data,    0x99,      0x7E0000,  0x10000,
+# Core dump
+foredump,   data,    coredump,  0x7F0000,  0x10000,

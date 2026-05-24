@@ -1,0 +1,6 @@
+# End Node Dependencies - Universal Sensor
+
+dependencies:
+  espressif/esp-zigbee-lib:
+    version: "^2.0.0"
+    require: public

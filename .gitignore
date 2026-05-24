@@ -1,0 +1,18 @@
+# ESP-IDF build output
+**/build/
+**/sdkconfig
+**/sdkconfig.old
+
+# Component manager downloaded dependencies
+**/managed_components/
+**/dependencies.lock
+
+# Python caching
+**/__pycache__/
+**/*.pyc
+
+# IDEs
+**/.vscode/
+**/.idea/
+**/*.suo
+**/*.user

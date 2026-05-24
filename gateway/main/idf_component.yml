@@ -1,0 +1,14 @@
+# Gateway Dependencies - Dual-SoC
+
+dependencies:
+  espressif/esp-zigbee-lib:
+    version: "^2.0.0"
+    require: public
+
+  espressif/esp_matter:
+    version: "^1.0.0"
+    require: private
+
+  espressif/cjson:
+    version: "^1.7.17"
+    require: private

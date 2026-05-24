@@ -1,0 +1,166 @@
+# Universal End Node Configuration
+# Sensor selection, power mode, intervals - all via menuconfig
+
+menu "Universal End Node Configuration"
+
+    comment "===== Sensor Selection (choose one or more) ====="
+    comment "Select the sensor(s) connected to this node."
+    comment "ZCL clusters are auto-generated from sensor capabilities."
+
+    config SENSOR_STUB
+        bool "Stub/Simulation (no hardware)"
+        default y if (!SENSOR_SHT30 && !SENSOR_SHT4X && !SENSOR_AHT20 && !SENSOR_DHT22 && !SENSOR_INTERNAL)
+        default n
+        help
+            Generate simulated sensor data. No hardware required.
+            Useful for development and testing. Provides temperature
+            and humidity simulation via random walk algorithm.
+
+    config SENSOR_INTERNAL
+        bool "ESP32 Internal Temperature Sensor"
+        default n
+        help
+            Use the ESP32 on-die temperature sensor.
+            Provides temperature only (no humidity).
+            Note: Reads die temperature, not ambient.
+
+    config SENSOR_SHT30
+        bool "Sensirion SHT30 (I2C)"
+        default n
+        help
+            High-accuracy temperature/humidity sensor.
+            +/- 0.2C, +/- 2% RH. I2C address 0x44.
+
+    config SENSOR_SHT4X
+        bool "Sensirion SHT40/SHT41 (I2C)"
+        default n
+        help
+            Ultra-high accuracy temperature/humidity sensor.
+            +/- 0.1C (SHT41), +/- 1.8% RH. I2C address 0x44.
+            Recommended for production use.
+
+    config SENSOR_AHT20
+        bool "Aosong AHT20 (I2C)"
+        default n
+        help
+            Budget temperature/humidity sensor.
+            +/- 0.3C, +/- 2% RH. I2C address 0x38.
+            Good value for cost-sensitive applications.
+
+    config SENSOR_DHT22
+        bool "DHT22/AM2302 (One-Wire)"
+        default n
+        help
+            Basic temperature/humidity sensor.
+            +/- 0.5C, +/- 2-5% RH. Single GPIO.
+            Slower reads (~2s between measurements).
+
+    comment "===== I2C Configuration (for I2C sensors) ====="
+
+    config SENSOR_I2C_SDA_PIN
+        int "I2C SDA GPIO Pin"
+        depends on SENSOR_SHT30 || SENSOR_SHT4X || SENSOR_AHT20
+        default 6
+        range 0 31
+        help
+            GPIO pin for I2C SDA (data) line.
+            Common: GPIO6, GPIO4, GPIO0
+
+    config SENSOR_I2C_SCL_PIN
+        int "I2C SCL GPIO Pin"
+        depends on SENSOR_SHT30 || SENSOR_SHT4X || SENSOR_AHT20
+        default 7
+        range 0 31
+        help
+            GPIO pin for I2C SCL (clock) line.
+            Common: GPIO7, GPIO5, GPIO1
+
+    config SENSOR_I2C_FREQ_HZ
+        int "I2C Clock Frequency"
+        depends on SENSOR_SHT30 || SENSOR_SHT4X || SENSOR_AHT20
+        default 100000
+        range 50000 400000
+        help
+            I2C bus frequency in Hz.
+            100KHz = standard mode, 400KHz = fast mode.
+
+    comment "===== DHT22 Configuration ====="
+
+    config SENSOR_DHT_PIN
+        int "DHT22 Data GPIO Pin"
+        depends on SENSOR_DHT22
+        default 5
+        range 0 31
+        help
+            GPIO pin connected to DHT22 data line.
+            Requires 10K pull-up resistor to 3.3V.
+
+    comment "===== Timing Configuration ====="
+
+    config SENSOR_READ_INTERVAL_SEC
+        int "Sensor Read Interval (seconds)"
+        default 30
+        range 5 3600
+        help
+            How often to read sensor values.
+            Shorter = more responsive but more power.
+            Longer = more power saving.
+
+    config SENSOR_REPORT_INTERVAL_SEC
+        int "ZCL Report Interval (seconds)"
+        default 60
+        range 10 3600
+        help
+            How often to send ZCL attribute reports
+            to the coordinator.
+
+    comment "===== Power Mode ====="
+
+    choice POWER_MODE
+        prompt "Power Mode"
+        default POWER_SLEEPY
+        help
+            Sleepy End Device: ultra-low power, deep sleep
+            between reads. Best for battery operation.
+            Always On: stays awake. Only for mains-powered.
+
+        config POWER_SLEEPY
+            bool "Sleepy End Device (SED) - Battery"
+
+        config POWER_ALWAYS_ON
+            bool "Always On - Mains Powered"
+    endchoice
+
+    config SLEEP_DURATION_SEC
+        int "Deep Sleep Duration (seconds)"
+        depends on POWER_SLEEPY
+        default 30
+        range 5 1800
+        help
+            Duration of deep sleep between wake cycles.
+            Device wakes, reads sensors, reports, sleeps.
+
+    comment "===== Battery Monitoring ====="
+
+    config BATTERY_VOLTAGE_MIN
+        int "Battery Minimum Voltage (mV)"
+        default 2000
+        range 1500 3000
+        help
+        Low battery warning threshold.
+
+    config BATTERY_VOLTAGE_MAX
+        int "Battery Maximum Voltage (mV)"
+        default 3000
+        range 2000 4200
+        help
+        Fully charged battery voltage.
+
+    config END_NODE_LOG_LEVEL
+        int "Log Verbosity"
+        default 3
+        range 0 5
+        help
+            0=NONE, 1=ERROR, 2=WARN, 3=INFO, 4=DEBUG, 5=VERBOSE
+
+endmenu
