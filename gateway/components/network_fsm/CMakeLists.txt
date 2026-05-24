@@ -8,7 +8,7 @@ idf_component_register(
         freertos
         nvs_flash
         esp_timer
-        esp_zigbee_lib
+        esp-zigbee-lib
         rcp_uart
     PRIV_REQUIRES
 )

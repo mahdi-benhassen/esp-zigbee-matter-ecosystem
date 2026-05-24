@@ -20,7 +20,8 @@
 
 #include "esp_zigbee.h"
 #include "ha/esp_zigbee_ha_standard.h"
-#include "zdo/esp_zigbee_zdo.h"
+#include "zdo/esp_zigbee_zdo_common.h"
+#include "zdo/esp_zigbee_zdo_command.h"
 
 /* RCP UART for Dual-SoC */
 #include "rcp_uart.h"
@@ -96,7 +97,7 @@ static esp_err_t action_cmd_shutdown(const fsm_event_msg_t *event);
 static esp_err_t action_keepalive_timer(const fsm_event_msg_t *event);
 static esp_err_t action_net_channel_conflict(const fsm_event_msg_t *event);
 
-static void zb_zdo_signal_handler(esp_zb_app_signal_t *signal_struct);
+void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct);
 
 /*=============================================================================
  * STATE TRANSITION TABLE - DUAL-SOC
@@ -485,10 +486,10 @@ static esp_err_t action_zb_init(const fsm_event_msg_t *event) {
     /* Platform config for RCP mode */
     esp_zb_platform_config_t platform_config = {
         .radio_config = {
-            .radio_mode = RADIO_MODE_UART_RCP,
+            .radio_mode = ZB_RADIO_MODE_UART_RCP,
         },
         .host_config = {
-            .host_connection_mode = HOST_CONNECTION_MODE_RCP,
+            .host_connection_mode = ZB_HOST_CONNECTION_MODE_NONE,
         },
     };
 
@@ -506,24 +507,20 @@ static esp_err_t action_zb_init(const fsm_event_msg_t *event) {
 
     esp_zb_init(&zb_config);
 
-    esp_zb_extended_pan_id_t ext_pan_id;
-    memcpy(ext_pan_id.pan_id, s_config.ext_pan_id, sizeof(esp_zb_pan_id_t));
+    esp_zb_ext_pan_id_t ext_pan_id;
+    memcpy(ext_pan_id, s_config.ext_pan_id, sizeof(esp_zb_ext_pan_id_t));
     esp_zb_set_extended_pan_id(ext_pan_id);
 
-    esp_zb_pan_id_t pan_id = {.pan_id = s_config.pan_id};
-    esp_zb_set_pan_id(pan_id);
+    esp_zb_set_pan_id(s_config.pan_id);
 
-    uint8_t channel_list[] = {s_config.channel};
-    esp_zb_set_channel_config((esp_zb_channel_config_t){
-        .channel_list = channel_list,
-        .channel_num = 1
-    });
+    esp_zb_set_channel_mask(1U << s_config.channel);
+    esp_zb_set_primary_network_channel_set(1U << s_config.channel);
 
     if (s_config.require_link_key) {
         esp_zb_secur_network_key_set(s_config.network_key);
     }
 
-    esp_zb_app_signal_handler_register(zb_zdo_signal_handler);
+    // esp_zb_app_signal_handler is called directly by the SDK in v2.x
 
     ESP_LOGI(TAG, "Coordinator config: Ch=%d, PAN=0x%04X, MaxChildren=%d",
              s_config.channel, s_config.pan_id, NETWORK_MAX_CHILDREN);
@@ -545,7 +542,7 @@ static esp_err_t action_zb_init_failed(const fsm_event_msg_t *event) {
 static esp_err_t action_net_formation(const fsm_event_msg_t *event) {
     (void)event;
     ESP_LOGI(TAG, "NET_FORMATION: Starting Zigbee network formation...");
-    ESP_ERROR_CHECK(esp_zb_start());
+    ESP_ERROR_CHECK(esp_zb_start(false));
     ESP_LOGI(TAG, "Zigbee stack started via RCP");
     s_retry_count = 0;
     return ESP_OK;
@@ -660,8 +657,9 @@ static esp_err_t action_node_join_accept(const fsm_event_msg_t *event) {
 static esp_err_t action_node_join_reject(const fsm_event_msg_t *event) {
     ESP_LOGW(TAG, "Node 0x%04X join rejected", event->payload.node.short_addr);
     s_stats.join_failures++;
-    esp_zb_zdo_mgmt_leave_req_t leave_req = {0};
+    esp_zb_zdo_mgmt_leave_req_param_t leave_req = {0};
     memcpy(leave_req.device_address, event->payload.node.eui64, sizeof(esp_zb_ieee_addr_t));
+    leave_req.dst_nwk_addr = event->payload.node.short_addr;
     leave_req.rejoin = 0;
     leave_req.remove_children = 0;
     esp_zb_zdo_device_leave_req(&leave_req, NULL, NULL);
@@ -759,7 +757,7 @@ static esp_err_t action_net_recover_start(const fsm_event_msg_t *event) {
     ESP_LOGI(TAG, "Recovery attempt %d...", s_recovery_attempts + 1);
     s_recovery_attempts++;
     for (int i = 0; i < s_node_count; i++) s_node_registry[i].is_online = false;
-    esp_zb_stop();
+    esp_zigbee_deinit();
     vTaskDelay(pdMS_TO_TICKS(1000));
 
     if (s_recovery_attempts < NETWORK_MAX_RETRY_ATTEMPTS) {
@@ -830,7 +828,7 @@ static esp_err_t action_cmd_deny_join(const fsm_event_msg_t *event) {
 static esp_err_t action_cmd_reset_network(const fsm_event_msg_t *event) {
     (void)event;
     ESP_LOGW(TAG, "NETWORK RESET!");
-    esp_zb_stop();
+    esp_zigbee_deinit();
     memset(s_node_registry, 0, sizeof(s_node_registry));
     s_node_count = 0;
     memset(&s_stats, 0, sizeof(s_stats));
@@ -844,7 +842,7 @@ static esp_err_t action_cmd_shutdown(const fsm_event_msg_t *event) {
     (void)event;
     ESP_LOGI(TAG, "Shutting down...");
     if (s_keepalive_timer) esp_timer_stop(s_keepalive_timer);
-    esp_zb_stop();
+    esp_zigbee_deinit();
     node_registry_persist();
     network_config_save(&s_config);
     rcp_uart_deinit();
@@ -906,7 +904,7 @@ static esp_err_t action_keepalive_timer(const fsm_event_msg_t *event) {
  * ZIGBEE CALLBACKS
  *============================================================================*/
 
-static void zb_zdo_signal_handler(esp_zb_app_signal_t *signal_struct) {
+void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct) {
     uint32_t *p_sg_p = signal_struct->p_app_signal;
     esp_err_t err_status = signal_struct->esp_err_status;
     esp_zb_app_signal_type_t sig_type = *p_sg_p;
@@ -946,9 +944,9 @@ static void zb_zdo_signal_handler(esp_zb_app_signal_t *signal_struct) {
             break;
         }
 
-        case ESP_ZB_ZDO_SIGNAL_LEAVE: {
-            esp_zb_zdo_signal_leave_params_t *params =
-                (esp_zb_zdo_signal_leave_params_t *)
+        case ESP_ZB_ZDO_SIGNAL_LEAVE_INDICATION: {
+            esp_zb_zdo_signal_leave_indication_params_t *params =
+                (esp_zb_zdo_signal_leave_indication_params_t *)
                 esp_zb_app_signal_get_params(p_sg_p);
             fsm_event_msg_t evt = {
                 .event = EVENT_NODE_LEAVE_NOTIFY,
@@ -1373,9 +1371,6 @@ esp_err_t network_cmd_get_config(network_config_t *config) {
 }
 
 esp_err_t network_cmd_set_config(const network_config_t *config) {
-    if (config == NULL) return ESP_ERR_INVALID_ARG;
-    return network_config_save(config);
-}
     if (config == NULL) return ESP_ERR_INVALID_ARG;
     return network_config_save(config);
 }

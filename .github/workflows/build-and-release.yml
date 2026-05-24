@@ -1,0 +1,97 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Firmware
+    runs-on: ubuntu-latest
+    container: espressif/idf:v5.5.4
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build End Node Firmware
+        run: |
+          . $IDF_PATH/export.sh
+          cd end_node
+          idf.py set-target esp32h2
+          idf.py build
+          # Rename/organize build outputs
+          mkdir -p ../artifacts/end_node
+          cp build/end_node.bin ../artifacts/end_node/end_node.bin
+          cp build/bootloader/bootloader.bin ../artifacts/end_node/bootloader.bin
+          cp build/partition_table/partition-table.bin ../artifacts/end_node/partition-table.bin
+
+      - name: Build Gateway Firmware
+        run: |
+          . $IDF_PATH/export.sh
+          cd gateway
+          idf.py set-target esp32s3
+          idf.py build
+          # Rename/organize build outputs
+          mkdir -p ../artifacts/gateway
+          cp build/gateway.bin ../artifacts/gateway/gateway.bin
+          cp build/bootloader/bootloader.bin ../artifacts/gateway/bootloader.bin
+          cp build/partition_table/partition-table.bin ../artifacts/gateway/partition-table.bin
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-binaries
+          path: artifacts/
+          if-no-files-found: error
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: firmware-binaries
+          path: artifacts/
+
+      - name: Package Firmware Binaries
+        run: |
+          cd artifacts
+          zip -r ../end_node_firmware.zip end_node/
+          zip -r ../gateway_firmware.zip gateway/
+          cd ..
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            end_node_firmware.zip
+            gateway_firmware.zip
+            artifacts/end_node/end_node.bin
+            artifacts/end_node/bootloader.bin
+            artifacts/end_node/partition-table.bin
+            artifacts/gateway/gateway.bin
+            artifacts/gateway/bootloader.bin
+            artifacts/gateway/partition-table.bin
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
