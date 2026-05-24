@@ -48,7 +48,7 @@ jobs:
           idf.py build
           # Rename/organize build outputs
           mkdir -p ../artifacts/gateway
-          cp build/gateway.bin ../artifacts/gateway/gateway.bin
+          cp build/esp_zigbee_gateway.bin ../artifacts/gateway/gateway.bin
           cp build/bootloader/bootloader.bin ../artifacts/gateway/bootloader.bin
           cp build/partition_table/partition-table.bin ../artifacts/gateway/partition-table.bin
 
