@@ -43,6 +43,8 @@ jobs:
           . $IDF_PATH/export.sh
           cd gateway
           idf.py set-target esp32s3
+          # Apply patches for GCC 14.2 / C++23 compatibility in managed_components
+          bash ../patches/apply_patches.sh
           idf.py build
           # Rename/organize build outputs
           mkdir -p ../artifacts/gateway
