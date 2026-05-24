@@ -5,6 +5,13 @@
 A comprehensive smart home IoT ecosystem built on Espressif ESP32 platform using
 the official `esp-zigbee-sdk` (v2.x ZBOSS stack) and ESP-IDF v5.x.
 
+## Detailed Documentation
+
+For in-depth explanations of the system components, refer to the following guides:
+- [Dual-SoC Gateway Architecture Guide](docs/gateway_guide.md): Details the host/RCP layout, state machines, and registry.
+- [Universal End Node Architecture Guide](docs/end_node_guide.md): Details the plugin driver architecture, dynamic ZCL registration, and sleepy end device low power configurations.
+- [CI/CD Pipeline & Build Matrix Guide](docs/cicd_guide.md): Details the automated GitHub Actions compiler runs and release mechanisms.
+
 ---
 
 ## What's New in v1.1.0
