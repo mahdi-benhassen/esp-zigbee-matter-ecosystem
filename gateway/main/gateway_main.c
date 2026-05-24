@@ -32,6 +32,8 @@
 #include "esp_log.h"
 #include "esp_err.h"
 #include "esp_system.h"
+#include "esp_chip_info.h"
+#include "spi_flash_mmap.h"
 #include "nvs_flash.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
