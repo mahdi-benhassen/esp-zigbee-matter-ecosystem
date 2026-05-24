@@ -101,3 +101,6 @@ CONFIG_LEDC_LOW_SPEED_MODE=y
 # USB-OTG (for debug console on some boards)
 CONFIG_USB_OTG_SUPPORTED=y
 CONFIG_ZB_SDK_1xx=y
+
+# mbedTLS - Matter SDK requires HKDF
+CONFIG_MBEDTLS_HKDF_C=y
