@@ -33,7 +33,7 @@
 #include "esp_err.h"
 #include "esp_system.h"
 #include "esp_chip_info.h"
-#include "spi_flash_mmap.h"
+#include "esp_flash.h"
 #include "nvs_flash.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
@@ -141,7 +141,9 @@ void app_main(void)
     esp_chip_info(&chip_info);
     ESP_LOGI(TAG, "Host: %s (cores:%d, rev:%d)",
              CONFIG_IDF_TARGET, chip_info.cores, chip_info.revision);
-    ESP_LOGI(TAG, "Flash: %d MB", spi_flash_get_chip_size() / (1024 * 1024));
+    uint32_t flash_size = 0;
+    esp_flash_get_size(NULL, &flash_size);
+    ESP_LOGI(TAG, "Flash: %lu MB", (unsigned long)(flash_size / (1024 * 1024)));
     ESP_LOGI(TAG, "Free heap: %lu bytes", esp_get_free_heap_size());
 
     /* [1] NVS */
