@@ -1,0 +1,2 @@
+# No external dependencies required. All components are built-in to ESP-IDF.
+dependencies: {}

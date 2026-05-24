@@ -52,6 +52,18 @@ jobs:
           cp build/bootloader/bootloader.bin ../artifacts/gateway/bootloader.bin
           cp build/partition_table/partition-table.bin ../artifacts/gateway/partition-table.bin
 
+      - name: Build RCP Firmware (ESP32-H2)
+        run: |
+          . $IDF_PATH/export.sh
+          cd gateway/rcp
+          idf.py set-target esp32h2
+          idf.py build
+          # Rename/organize build outputs
+          mkdir -p ../../artifacts/rcp
+          cp build/esp_zigbee_rcp.bin ../../artifacts/rcp/rcp.bin
+          cp build/bootloader/bootloader.bin ../../artifacts/rcp/bootloader.bin
+          cp build/partition_table/partition-table.bin ../../artifacts/rcp/partition-table.bin
+
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -79,6 +91,7 @@ jobs:
           cd artifacts
           zip -r ../end_node_firmware.zip end_node/
           zip -r ../gateway_firmware.zip gateway/
+          zip -r ../rcp_firmware.zip rcp/
           cd ..
 
       - name: Create Release
@@ -87,12 +100,16 @@ jobs:
           files: |
             end_node_firmware.zip
             gateway_firmware.zip
+            rcp_firmware.zip
             artifacts/end_node/end_node.bin
             artifacts/end_node/bootloader.bin
             artifacts/end_node/partition-table.bin
             artifacts/gateway/gateway.bin
             artifacts/gateway/bootloader.bin
             artifacts/gateway/partition-table.bin
+            artifacts/rcp/rcp.bin
+            artifacts/rcp/bootloader.bin
+            artifacts/rcp/partition-table.bin
           draft: false
           prerelease: false
         env:
