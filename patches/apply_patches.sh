@@ -17,7 +17,7 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 #   free-standing (non-member) operator== so ADL finds it for std::optional.
 # ---------------------------------------------------------------------------
 patch_closure_control() {
-    local GATEWAY_MC="$PROJECT_ROOT/gateway/managed_components"
+    local GATEWAY_MC="$PROJECT_ROOT/gateway/main_soc/managed_components"
     local TARGET_FILE="$GATEWAY_MC/espressif__esp_matter/connectedhomeip/connectedhomeip/src/app/clusters/closure-control-server/closure-control-cluster-objects.h"
 
     if [ ! -f "$TARGET_FILE" ]; then

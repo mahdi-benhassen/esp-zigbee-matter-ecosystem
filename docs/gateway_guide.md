@@ -17,7 +17,7 @@ The gateway is built on a Dual-SoC hardware architecture, partitioning the appli
 
 ## RCP UART Driver Component (`rcp_uart`)
 
-The gateway communicates with the ESP32-H2 RCP using a custom UART framing layer configured via [rcp_uart.h](file:///c:/Users/MAHDI/Desktop/Agent_AI/esp-thread-br/esp-zigbee-matter-ecosystem/gateway/components/rcp_uart/include/rcp_uart.h) and [rcp_uart.c](file:///c:/Users/MAHDI/Desktop/Agent_AI/esp-thread-br/esp-zigbee-matter-ecosystem/gateway/components/rcp_uart/rcp_uart.c).
+The gateway communicates with the ESP32-H2 RCP using a custom UART framing layer configured via [rcp_uart.h](file:///c:/Users/MAHDI/Desktop/Agent_AI/esp-thread-br/esp-zigbee-matter-ecosystem/gateway/main_soc/components/rcp_uart/include/rcp_uart.h) and [rcp_uart.c](file:///c:/Users/MAHDI/Desktop/Agent_AI/esp-thread-br/esp-zigbee-matter-ecosystem/gateway/main_soc/components/rcp_uart/rcp_uart.c).
 
 ### Features
 - **State Tracking**: Monitors UART link state (Uninitialized, Ready, Error).
@@ -28,7 +28,7 @@ The gateway communicates with the ESP32-H2 RCP using a custom UART framing layer
 
 ## Network Finite State Machine (`network_fsm`)
 
-The network FSM handles initialization, network formation, node joining, and recovery. It is defined in [network_fsm.h](file:///c:/Users/MAHDI/Desktop/Agent_AI/esp-thread-br/esp-zigbee-matter-ecosystem/gateway/components/network_fsm/include/network_fsm.h) and implemented in [network_fsm.c](file:///c:/Users/MAHDI/Desktop/Agent_AI/esp-thread-br/esp-zigbee-matter-ecosystem/gateway/components/network_fsm/network_fsm.c).
+The network FSM handles initialization, network formation, node joining, and recovery. It is defined in [network_fsm.h](file:///c:/Users/MAHDI/Desktop/Agent_AI/esp-thread-br/esp-zigbee-matter-ecosystem/gateway/main_soc/components/network_fsm/include/network_fsm.h) and implemented in [network_fsm.c](file:///c:/Users/MAHDI/Desktop/Agent_AI/esp-thread-br/esp-zigbee-matter-ecosystem/gateway/main_soc/components/network_fsm/network_fsm.c).
 
 ### Core States
 1. **`NET_STATE_INIT`**: Initial state of the state machine.

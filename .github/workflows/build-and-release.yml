@@ -41,21 +41,21 @@ jobs:
       - name: Build Gateway Firmware
         run: |
           . $IDF_PATH/export.sh
-          cd gateway
+          cd gateway/main_soc
           idf.py set-target esp32s3
           # Apply patches for GCC 14.2 / C++23 compatibility in managed_components
-          bash ../patches/apply_patches.sh
+          bash ../../patches/apply_patches.sh
           idf.py build
           # Rename/organize build outputs
-          mkdir -p ../artifacts/gateway
-          cp build/esp_zigbee_gateway.bin ../artifacts/gateway/gateway.bin
-          cp build/bootloader/bootloader.bin ../artifacts/gateway/bootloader.bin
-          cp build/partition_table/partition-table.bin ../artifacts/gateway/partition-table.bin
+          mkdir -p ../../artifacts/gateway
+          cp build/esp_zigbee_gateway.bin ../../artifacts/gateway/gateway.bin
+          cp build/bootloader/bootloader.bin ../../artifacts/gateway/bootloader.bin
+          cp build/partition_table/partition-table.bin ../../artifacts/gateway/partition-table.bin
 
       - name: Build RCP Firmware (ESP32-H2)
         run: |
           . $IDF_PATH/export.sh
-          cd gateway/rcp
+          cd gateway/rcp_soc
           idf.py set-target esp32h2
           idf.py build
           # Rename/organize build outputs
