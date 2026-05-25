@@ -46,8 +46,8 @@ extern "C" {
 #define JSN_ECHO_GPIO               9
 
 /* HX711 2-Wire Serial (Load Cell) */
-#define HX711_PD_SCK_GPIO           6
-#define HX711_DOUT_GPIO             7
+#define HX711_PD_SCK_GPIO           10
+#define HX711_DOUT_GPIO             11
 
 /* Soil Moisture Analog Channel (ADC1) */
 #define SOIL_MOISTURE_ADC_CHANNEL   2  /* ADC1 Channel 2 (GPIO2) */

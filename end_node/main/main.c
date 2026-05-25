@@ -38,12 +38,21 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
 
     switch (sig_type) {
         case ESP_ZB_BDB_SIGNAL_DEVICE_FIRST_START:
-        case ESP_ZB_BDB_SIGNAL_DEVICE_REBOOT:
             if (status == ESP_OK) {
-                ESP_LOGI(TAG, "Zigbee stack started successfully. Starting steering/joining...");
+                ESP_LOGI(TAG, "Zigbee stack started successfully (First start). Starting network steering...");
                 esp_zb_bdb_start_top_level_commissioning(ESP_ZB_BDB_MODE_NETWORK_STEERING);
             } else {
-                ESP_LOGE(TAG, "Zigbee device start failed, status: %s", esp_err_to_name(status));
+                ESP_LOGE(TAG, "Zigbee device first start failed, status: %s", esp_err_to_name(status));
+                xEventGroupSetBits(s_evt_group, EVENT_NET_FAILED);
+            }
+            break;
+
+        case ESP_ZB_BDB_SIGNAL_DEVICE_REBOOT:
+            if (status == ESP_OK) {
+                ESP_LOGI(TAG, "Zigbee stack started successfully (Reboot). Rejoining network automatically using saved credentials...");
+                /* ZBOSS automatically performs secure rejoin using stored NVS configuration; do not restart steering */
+            } else {
+                ESP_LOGE(TAG, "Zigbee device reboot start failed, status: %s", esp_err_to_name(status));
                 xEventGroupSetBits(s_evt_group, EVENT_NET_FAILED);
             }
             break;

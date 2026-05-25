@@ -115,8 +115,66 @@ void sensor_hub_power_on(void)
 
 void sensor_hub_power_off(void)
 {
-    ESP_LOGI(TAG, "Power-Gating OFF: De-energizing sensor VCC rail");
+    ESP_LOGI(TAG, "Power-Gating OFF: De-energizing sensor VCC rail & isolating communication pins");
     gpio_set_level((gpio_num_t)SENSOR_POWER_CTRL_GPIO, 0);
+
+    /* Isolate I2C pins */
+#if CONFIG_ENABLE_BME280 || CONFIG_ENABLE_BH1750 || CONFIG_ENABLE_SCD41
+    if (s_i2c_bus) {
+        i2c_del_master_bus(s_i2c_bus);
+        s_i2c_bus = NULL;
+    }
+    gpio_set_direction((gpio_num_t)SENSOR_I2C_SDA_GPIO, GPIO_MODE_INPUT);
+    gpio_set_pull_mode((gpio_num_t)SENSOR_I2C_SDA_GPIO, GPIO_FLOATING);
+    gpio_set_direction((gpio_num_t)SENSOR_I2C_SCL_GPIO, GPIO_MODE_INPUT);
+    gpio_set_pull_mode((gpio_num_t)SENSOR_I2C_SCL_GPIO, GPIO_FLOATING);
+#endif
+
+    /* Isolate 1-Wire pin */
+#if CONFIG_ENABLE_DS18B20
+    gpio_set_direction((gpio_num_t)DS18B20_1WIRE_GPIO, GPIO_MODE_INPUT);
+    gpio_set_pull_mode((gpio_num_t)DS18B20_1WIRE_GPIO, GPIO_FLOATING);
+#endif
+
+    /* Isolate Winsen ZE03 NH3 UART pins */
+#if CONFIG_ENABLE_ZE03_NH3
+    uart_driver_delete(ZE03_UART_PORT);
+    gpio_set_direction((gpio_num_t)ZE03_TX_GPIO, GPIO_MODE_INPUT);
+    gpio_set_pull_mode((gpio_num_t)ZE03_TX_GPIO, GPIO_FLOATING);
+    gpio_set_direction((gpio_num_t)ZE03_RX_GPIO, GPIO_MODE_INPUT);
+    gpio_set_pull_mode((gpio_num_t)ZE03_RX_GPIO, GPIO_FLOATING);
+#endif
+
+    /* Isolate JSN-SR04T Trig/Echo pins */
+#if CONFIG_ENABLE_JSN_SR04T
+    gpio_set_direction((gpio_num_t)JSN_TRIG_GPIO, GPIO_MODE_INPUT);
+    gpio_set_pull_mode((gpio_num_t)JSN_TRIG_GPIO, GPIO_FLOATING);
+    gpio_set_direction((gpio_num_t)JSN_ECHO_GPIO, GPIO_MODE_INPUT);
+    gpio_set_pull_mode((gpio_num_t)JSN_ECHO_GPIO, GPIO_FLOATING);
+#endif
+
+    /* Isolate HX711 SCK/DOUT pins */
+#if CONFIG_ENABLE_HX711
+    gpio_set_direction((gpio_num_t)HX711_PD_SCK_GPIO, GPIO_MODE_INPUT);
+    gpio_set_pull_mode((gpio_num_t)HX711_PD_SCK_GPIO, GPIO_FLOATING);
+    gpio_set_direction((gpio_num_t)HX711_DOUT_GPIO, GPIO_MODE_INPUT);
+    gpio_set_pull_mode((gpio_num_t)HX711_DOUT_GPIO, GPIO_FLOATING);
+#endif
+
+    /* Isolate Soil Moisture ADC pin */
+#if CONFIG_ENABLE_SOIL_MOISTURE
+    if (s_adc1_handle) {
+        adc_oneshot_del_unit(s_adc1_handle);
+        s_adc1_handle = NULL;
+    }
+    if (s_adc1_cali_handle) {
+        adc_cali_delete_scheme_curve_fitting(s_adc1_cali_handle);
+        s_adc1_cali_handle = NULL;
+    }
+    s_adc_cali_enabled = false;
+    gpio_set_direction((gpio_num_t)2, GPIO_MODE_INPUT);
+    gpio_set_pull_mode((gpio_num_t)2, GPIO_FLOATING);
+#endif
 }
 
 /*=============================================================================
@@ -153,6 +211,8 @@ static bool ds18b20_reset(void)
 
 static void ds18b20_write_bit(bool bit)
 {
+    portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
+    portENTER_CRITICAL(&mux);
     if (bit) {
         ds18b20_write_low();
         esp_rom_delay_us(6);
@@ -164,17 +224,21 @@ static void ds18b20_write_bit(bool bit)
         ds18b20_release();
         esp_rom_delay_us(10);
     }
+    portEXIT_CRITICAL(&mux);
 }
 
 static bool ds18b20_read_bit(void)
 {
     bool bit = false;
+    portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
+    portENTER_CRITICAL(&mux);
     ds18b20_write_low();
     esp_rom_delay_us(3);
     ds18b20_release();
     esp_rom_delay_us(10);
     bit = (ds18b20_read_pin() != 0);
     esp_rom_delay_us(57);
+    portEXIT_CRITICAL(&mux);
     return bit;
 }
 
@@ -510,6 +574,8 @@ static esp_err_t hx711_read_raw(int32_t *raw_val)
     }
 
     uint32_t val = 0;
+    portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
+    portENTER_CRITICAL(&mux);
     /* Read 24 bits */
     for (int i = 0; i < 24; i++) {
         gpio_set_level((gpio_num_t)HX711_PD_SCK_GPIO, 1);
@@ -527,6 +593,7 @@ static esp_err_t hx711_read_raw(int32_t *raw_val)
     esp_rom_delay_us(1);
     gpio_set_level((gpio_num_t)HX711_PD_SCK_GPIO, 0);
     esp_rom_delay_us(1);
+    portEXIT_CRITICAL(&mux);
 
     /* Sign extend 24-bit to signed 32-bit */
     if (val & 0x800000) {
