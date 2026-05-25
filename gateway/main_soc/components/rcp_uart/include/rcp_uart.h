@@ -53,7 +53,11 @@ extern "C" {
 
 /** RCP reset GPIO (optional - ESP32-H2 RESET pin) */
 #ifndef RCP_RESET_GPIO
+#ifdef CONFIG_RCP_RESET_GPIO
+#define RCP_RESET_GPIO          CONFIG_RCP_RESET_GPIO
+#else
 #define RCP_RESET_GPIO          (-1)    /* -1 = not connected */
+#endif
 #endif
 
 /** RCP boot mode GPIO (optional - pull low for download mode) */

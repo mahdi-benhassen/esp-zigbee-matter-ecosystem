@@ -29,19 +29,27 @@ menu "Gateway Configuration (Dual-SoC)"
 
     config ZB_UART_TX_PIN
         int "RCP UART TX Pin (S3 -> H2)"
-        default 5
+        default 17
         range 0 48
         help
             ESP32-S3 GPIO pin for UART TX to ESP32-H2.
-            Recommended: GPIO5 (UART1 default TX).
+            Recommended: GPIO17 (M5Stack CoreS3 Grove PORT C TX).
 
     config ZB_UART_RX_PIN
         int "RCP UART RX Pin (S3 <- H2)"
-        default 4
+        default 18
         range 0 48
         help
             ESP32-S3 GPIO pin for UART RX from ESP32-H2.
-            Recommended: GPIO4 (UART1 default RX).
+            Recommended: GPIO18 (M5Stack CoreS3 Grove PORT C RX).
+
+    config RCP_RESET_GPIO
+        int "RCP Hardware Reset Pin"
+        default 9
+        range -1 48
+        help
+            ESP32-S3 GPIO pin connected to ESP32-H2 EN (Reset).
+            Set to -1 if hardware reset is not wired.
 
     config ZB_UART_BAUDRATE
         int "RCP UART Baud Rate"

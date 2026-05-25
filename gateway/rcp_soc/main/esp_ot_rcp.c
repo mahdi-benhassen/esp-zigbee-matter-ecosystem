@@ -69,8 +69,8 @@ void app_main(void)
                         .rx_flow_ctrl_thresh = 0,
                         .source_clk = UART_SCLK_DEFAULT,
                     },
-                    .rx_pin = 8,  /* ESP32-H2 RX pin connected to S3 TX (GPIO5) */
-                    .tx_pin = 9,  /* ESP32-H2 TX pin connected to S3 RX (GPIO4) */
+                    .rx_pin = 23, /* ESP32-H2 RX pin connected to S3 TX */
+                    .tx_pin = 24, /* ESP32-H2 TX pin connected to S3 RX */
                 },
             },
             .port_config = {
