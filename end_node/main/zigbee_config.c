@@ -125,7 +125,7 @@ esp_err_t zigbee_data_model_init(void)
     esp_zb_carbon_dioxide_measurement_cluster_cfg_t co2_cfg = {
         .measured_value = ESP_ZB_ZCL_CARBON_DIOXIDE_MEASUREMENT_MEASURED_VALUE_DEFAULT,
         .min_measured_value = 0.0f,
-        .max_measured_value = 40000.0f,
+        .max_measured_value = 0.04f, /* 40,000 ppm represented as volume fraction */
     };
     esp_zb_attribute_list_t *co2_attr = esp_zb_carbon_dioxide_measurement_cluster_create(&co2_cfg);
     esp_zb_cluster_list_add_carbon_dioxide_measurement_cluster(cluster_list_1, co2_attr, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
@@ -200,7 +200,7 @@ esp_err_t zigbee_data_model_init(void)
     esp_zb_carbon_dioxide_measurement_cluster_cfg_t nh3_cfg = {
         .measured_value = ESP_ZB_ZCL_CARBON_DIOXIDE_MEASUREMENT_MEASURED_VALUE_DEFAULT,
         .min_measured_value = 0.0f,
-        .max_measured_value = 100.0f,
+        .max_measured_value = 0.0001f, /* 100 ppm represented as volume fraction */
     };
     esp_zb_attribute_list_t *nh3_attr = esp_zb_carbon_dioxide_measurement_cluster_create(&nh3_cfg);
     esp_zb_cluster_list_add_carbon_dioxide_measurement_cluster(cluster_list_3, nh3_attr, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
