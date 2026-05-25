@@ -1,22 +1,15 @@
-# Universal End Node - Main Application
-#
-# Sensor-agnostic: build configuration selects sensor type(s)
-# ZCL clusters auto-registered based on sensor capabilities
-
+# Main component CMakeLists.txt for Zigbee Sleepy End Device
 idf_component_register(
     SRCS
-        "end_node_main.c"
-    INCLUDE_DIRS
-        "."
-    REQUIRES
-        sensor_universal
-        sensor_drivers
-        zcl_clusters
-        esp-zigbee-lib
-        nvs_flash
-        esp_timer
-        driver
-        esp_adc
-        esp_driver_tsens
-        spi_flash
+        " main.c\
+ \sensor_hub.c\
+ \zigbee_config.c\
+ INCLUDE_DIRS
+ \.\
+ REQUIRES
+ esp-zigbee-lib
+ nvs_flash
+ esp_timer
+ driver
+ esp_adc
 )
