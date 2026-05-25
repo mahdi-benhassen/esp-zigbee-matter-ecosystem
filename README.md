@@ -66,10 +66,10 @@ esp-zigbee-matter-ecosystem/
 | VCC Rail | Power Gate | GPIO4 | Drives PMOS or Load Switch |
 | BME280 / BH1750 / SCD41 | I2C | SDA=GPIO6, SCL=GPIO7 | Shared I2C bus |
 | DS18B20 | 1-Wire | GPIO5 | Bit-banged timing |
-| Winsen ZE03-NH3 | UART2 | TX=GPIO19, RX=GPIO18 | 9600 bps Q&A mode |
-| JSN-SR04T | GPIO | Trig=GPIO8, Echo=GPIO9 | Microsecond pulse timing |
-| HX711 | 2-Wire Serial | SCK=GPIO6, DOUT=GPIO7 | Synchronous weight readings |
-| Soil Moisture v1.2 | ADC1 | Channel 2 (GPIO2) | 12-bit SAR ADC one-shot |
+| Winsen ZE03-NH3 | UART1 | TX=GPIO24, RX=GPIO23 | 9600 bps Q&A mode |
+| JSN-SR04T | GPIO | Trig=GPIO0, Echo=GPIO1 | Microsecond pulse timing |
+| HX711 | 2-Wire Serial | SCK=GPIO10, DOUT=GPIO11 | Synchronous weight readings |
+| Soil Moisture v1.2 | ADC1 | Channel 1 (GPIO2) | 12-bit SAR ADC one-shot |
 
 ---
 

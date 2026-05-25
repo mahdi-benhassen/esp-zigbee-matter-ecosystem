@@ -17,7 +17,7 @@ graph TD
     B -- Power On Reset --> D[Cold Boot Init]
     C --> E[Power-Gate ON: GPIO 4 HIGH]
     D --> E
-    E --> F[Stabilization Delay: 50ms]
+    E --> F[Stabilization Delay: 1000ms]
     F --> G[Trigger Conversions]
     G --> H[Wait 5s for Slow Sensors]
     H --> I[Collect Sensor Hub Data]
@@ -53,7 +53,7 @@ The sensor hub encapsulates the low-level drivers, math compensation algorithms,
    - Measures CO2 density (ppm).
    - Wakes up from sleep, triggers conversion, waits 5 seconds, reads data, and returns to sleep.
 
-4. **Capacitive Soil Moisture Probe v1.2 (ADC1 Channel 2)**:
+4. **Capacitive Soil Moisture Probe v1.2 (ADC1 Channel 1 / GPIO2)**:
    - Samples analog voltage using ESP32-H2 12-bit SAR ADC with attenuation configured for 0–3.3V range.
    - Maps raw voltage linearly to Volumetric Water Content (VWC) % using wet/dry thresholds.
 
@@ -61,16 +61,16 @@ The sensor hub encapsulates the low-level drivers, math compensation algorithms,
    - Implements precise bit-banged 1-Wire protocol timings using `esp_rom_delay_us()` to support RISC-V targets.
    - Reads Root-Zone Temperature.
 
-6. **Winsen ZE03-NH3 (UART2, TX=19, RX=18)**:
+6. **Winsen ZE03-NH3 (UART1, TX=24, RX=23)**:
    - Interfaces via UART at 9600 bps.
    - Uses **Q&A Mode** transactions to request gas density values.
    - Verifies 9-byte packet checksums.
 
-7. **JSN-SR04T Waterproof Ultrasonic Probe (Trig=8, Echo=9)**:
+7. **JSN-SR04T Waterproof Ultrasonic Probe (Trig=0, Echo=1)**:
    - Measures Silo depth/water level.
    - Uses Trig pulse (>12us) and measures Echo duration via microsecond counts.
 
-8. **HX711 Load Cell (SCK=6, DOUT=7)**:
+8. **HX711 Load Cell (SCK=10, DOUT=11)**:
    - Synchronous 24-bit clock-data protocol.
    - Measures structural weight in kilograms.
 
