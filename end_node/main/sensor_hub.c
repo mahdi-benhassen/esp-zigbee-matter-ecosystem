@@ -172,8 +172,8 @@ void sensor_hub_power_off(void)
         s_adc1_cali_handle = NULL;
     }
     s_adc_cali_enabled = false;
-    gpio_set_direction((gpio_num_t)2, GPIO_MODE_INPUT);
-    gpio_set_pull_mode((gpio_num_t)2, GPIO_FLOATING);
+    gpio_set_direction((gpio_num_t)SOIL_MOISTURE_ADC_GPIO, GPIO_MODE_INPUT);
+    gpio_set_pull_mode((gpio_num_t)SOIL_MOISTURE_ADC_GPIO, GPIO_FLOATING);
 #endif
 }
 

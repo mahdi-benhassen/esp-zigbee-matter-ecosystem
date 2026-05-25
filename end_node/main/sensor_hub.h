@@ -37,20 +37,21 @@ extern "C" {
 #define DS18B20_1WIRE_GPIO          5
 
 /* UART Interface (Winsen ZE03-NH3) */
-#define ZE03_UART_PORT              2
-#define ZE03_TX_GPIO                19
-#define ZE03_RX_GPIO                18
+#define ZE03_UART_PORT              1
+#define ZE03_TX_GPIO                24
+#define ZE03_RX_GPIO                23
 
 /* GPIO Trig/Echo Interface (JSN-SR04T) */
-#define JSN_TRIG_GPIO               8
-#define JSN_ECHO_GPIO               9
+#define JSN_TRIG_GPIO               0
+#define JSN_ECHO_GPIO               1
 
 /* HX711 2-Wire Serial (Load Cell) */
 #define HX711_PD_SCK_GPIO           10
 #define HX711_DOUT_GPIO             11
 
-/* Soil Moisture Analog Channel (ADC1) */
-#define SOIL_MOISTURE_ADC_CHANNEL   2  /* ADC1 Channel 2 (GPIO2) */
+/* Soil Moisture Analog Channel (ADC1) & GPIO Pin */
+#define SOIL_MOISTURE_ADC_CHANNEL   1  /* ADC1 Channel 1 (GPIO2) */
+#define SOIL_MOISTURE_ADC_GPIO      2
 
 /*=============================================================================
  * DATA STRUCTURES

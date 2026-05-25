@@ -114,7 +114,12 @@ static void sensor_execution_task(void *pvParameters)
     sensor_hub_power_on();
 
     /* 3. Non-blocking delay for voltage rail and transducers stabilization */
+#if CONFIG_ENABLE_SCD41
+    /* SCD41 requires at least 1000ms after power-up to enter idle state before any commands can be sent */
+    vTaskDelay(pdMS_TO_TICKS(1000));
+#else
     vTaskDelay(pdMS_TO_TICKS(50));
+#endif
 
     /* 4. Trigger conversions for slow sensors (e.g. SCD41 CO2, DS18B20 1-Wire) */
     sensor_hub_trigger_conversions();
