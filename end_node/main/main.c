@@ -25,16 +25,7 @@ static const char *TAG = "MAIN_APP";
 static EventGroupHandle_t s_evt_group = NULL;
 static SemaphoreHandle_t s_nvs_mutex = NULL;
 
-/* RTC Retained Memory for calibration parameters to bypass re-reading over I2C */
-#if CONFIG_ENABLE_BME280
-RTC_DATA_ATTR static struct {
-    uint16_t dig_T1; int16_t dig_T2; int16_t dig_T3;
-    uint16_t dig_P1; int16_t dig_P2; int16_t dig_P3; int16_t dig_P4; int16_t dig_P5;
-    int16_t dig_P6;  int16_t dig_P7; int16_t dig_P8; int16_t dig_P9;
-    uint8_t dig_H1;  int16_t dig_H2; uint8_t dig_H3; int16_t dig_H4; int16_t dig_H5; int8_t dig_H6;
-    bool valid;
-} s_rtc_bme280_calib = { .valid = false };
-#endif
+
 
 /*=============================================================================
  * ZIGBEE CALLBACKS & SIGNAL HANDLER
@@ -90,7 +81,7 @@ static esp_err_t zb_action_handler(esp_zb_core_action_callback_id_t callback_id,
 static void zigbee_main_task(void *pvParameters)
 {
     ESP_LOGI(TAG, "Launching Zigbee Main Loop...");
-    esp_zb_launch_mainloop();
+    esp_zigbee_launch_mainloop();
     vTaskDelete(NULL);
 }
 
@@ -204,7 +195,7 @@ void app_main(void)
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
-    xSemaphoreRelease(s_nvs_mutex);
+    xSemaphoreGive(s_nvs_mutex);
 
     /* Initialize basic hardware sensor interfaces (I2C, ADC, UART, GPIO) */
     ESP_ERROR_CHECK(sensor_hub_init());

@@ -58,7 +58,8 @@ typedef struct {
     int32_t  t_fine;
 } bme280_calib_t;
 
-static bme280_calib_t s_bme280_calib;
+RTC_DATA_ATTR static bme280_calib_t s_bme280_calib;
+RTC_DATA_ATTR static bool s_bme280_calib_valid = false;
 #endif
 
 /*=============================================================================
@@ -214,6 +215,11 @@ static esp_err_t bme280_write_reg(uint8_t reg_addr, uint8_t val)
 
 static esp_err_t bme280_init_sensor(void)
 {
+    if (s_bme280_calib_valid) {
+        ESP_LOGI(TAG, "BME280: Using RTC retained calibration parameters");
+        return ESP_OK;
+    }
+
     uint8_t id = 0;
     esp_err_t err = bme280_read_regs(0xD0, &id, 1);
     if (err != ESP_OK || id != 0x60) {
@@ -254,6 +260,7 @@ static esp_err_t bme280_init_sensor(void)
     s_bme280_calib.dig_H5 = (int16_t)((calib2[5] << 4) | ((calib2[4] >> 4) & 0x0F));
     s_bme280_calib.dig_H6 = (int8_t)calib2[6];
 
+    s_bme280_calib_valid = true;
     ESP_LOGI(TAG, "BME280 calibration data loaded successfully");
     return ESP_OK;
 }

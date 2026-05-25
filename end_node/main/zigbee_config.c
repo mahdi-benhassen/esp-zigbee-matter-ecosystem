@@ -1,5 +1,6 @@
 #include "zigbee_config.h"
 #include <string.h>
+#include <math.h>
 #include "esp_log.h"
 #include "esp_zigbee.h"
 #include "ha/esp_zigbee_ha_standard.h"
@@ -18,7 +19,7 @@ void zigbee_sed_stack_init(void)
     /* 1. Platform Config */
     esp_zb_platform_config_t plat_cfg = {
         .radio_config = {.radio_mode = ESP_ZIGBEE_RADIO_MODE_NATIVE},
-        .host_config = {.host_connection_mode = ESP_ZB_HOST_CONNECTION_MODE_NONE},
+        .host_config = {.host_connection_mode = ZB_HOST_CONNECTION_MODE_NONE},
     };
     ESP_ERROR_CHECK(esp_zb_platform_config(&plat_cfg));
 
