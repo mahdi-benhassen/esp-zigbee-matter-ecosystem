@@ -70,6 +70,7 @@
  * MODULE STATE
  *============================================================================*/
 static bool s_initialized = false;
+static portMUX_TYPE s_hx711_mux = portMUX_INITIALIZER_UNLOCKED;
 
 /*=============================================================================
  * INIT
@@ -139,8 +140,7 @@ static esp_err_t hx711_read_raw(int32_t *raw_val)
     }
 
     uint32_t val = 0;
-    portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
-    portENTER_CRITICAL(&mux);
+    portENTER_CRITICAL(&s_hx711_mux);
 
     /* ---- Clock out 24 data bits (MSB first) ---- */
     for (int i = 0; i < 24; i++) {
@@ -160,7 +160,7 @@ static esp_err_t hx711_read_raw(int32_t *raw_val)
     gpio_set_level((gpio_num_t)CONFIG_SENSOR_HX711_SCK_PIN, 0);
     esp_rom_delay_us(1);
 
-    portEXIT_CRITICAL(&mux);
+    portEXIT_CRITICAL(&s_hx711_mux);
 
     /* ---- Sign-extend 24-bit two's-complement → signed 32-bit ---- */
     if (val & 0x800000) {

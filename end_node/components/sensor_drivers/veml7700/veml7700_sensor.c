@@ -227,22 +227,12 @@ static float veml7700_correct_nonlinearity(float lux_linear)
  */
 static esp_err_t veml7700_init(void)
 {
-    ESP_LOGI(TAG, "VEML7700 init: SDA=GPIO%d, SCL=GPIO%d",
-             CONFIG_SENSOR_I2C_SDA_PIN, CONFIG_SENSOR_I2C_SCL_PIN);
+    ESP_LOGI(TAG, "VEML7700 init using shared I2C bus");
 
-    i2c_master_bus_config_t bus_config = {
-        .i2c_port = VEML7700_I2C_PORT,
-        .sda_io_num = CONFIG_SENSOR_I2C_SDA_PIN,
-        .scl_io_num = CONFIG_SENSOR_I2C_SCL_PIN,
-        .clk_source = I2C_CLK_SRC_DEFAULT,
-        .glitch_ignore_cnt = 7,
-        .flags.enable_internal_pullup = true,
-    };
-
-    esp_err_t err = i2c_new_master_bus(&bus_config, &s_i2c_bus);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "I2C bus failed: %s", esp_err_to_name(err));
-        return err;
+    s_i2c_bus = sensor_registry_get_i2c_bus();
+    if (s_i2c_bus == NULL) {
+        ESP_LOGE(TAG, "Failed to get shared I2C bus");
+        return ESP_FAIL;
     }
 
     i2c_device_config_t dev_config = {
@@ -251,10 +241,9 @@ static esp_err_t veml7700_init(void)
         .scl_speed_hz = CONFIG_SENSOR_I2C_FREQ_HZ,
     };
 
-    err = i2c_master_bus_add_device(s_i2c_bus, &dev_config, &s_veml7700_dev);
+    esp_err_t err = i2c_master_bus_add_device(s_i2c_bus, &dev_config, &s_veml7700_dev);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failed to add VEML7700 device: %s", esp_err_to_name(err));
-        i2c_del_master_bus(s_i2c_bus);
         s_i2c_bus = NULL;
         return err;
     }
@@ -271,7 +260,6 @@ static esp_err_t veml7700_init(void)
         ESP_LOGE(TAG, "VEML7700 ALS_CONF write failed — device not responding");
         i2c_master_bus_rm_device(s_veml7700_dev);
         s_veml7700_dev = NULL;
-        i2c_del_master_bus(s_i2c_bus);
         s_i2c_bus = NULL;
         return err;
     }
@@ -405,10 +393,7 @@ static esp_err_t veml7700_deinit(void)
         i2c_master_bus_rm_device(s_veml7700_dev);
         s_veml7700_dev = NULL;
     }
-    if (s_i2c_bus) {
-        i2c_del_master_bus(s_i2c_bus);
-        s_i2c_bus = NULL;
-    }
+    s_i2c_bus = NULL;
     s_initialized = false;
     ESP_LOGI(TAG, "VEML7700 deinitialized");
     return ESP_OK;

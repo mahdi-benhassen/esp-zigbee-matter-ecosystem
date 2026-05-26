@@ -22,6 +22,7 @@
 #include "esp_err.h"
 #include <stdint.h>
 #include <stdbool.h>
+#include "driver/i2c_master.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -220,6 +221,15 @@ void sensor_registry_print(void);
  */
 esp_err_t sensor_data_to_zcl(const sensor_data_t *data, sensor_capability_t cap,
                               void *zcl_value);
+
+/**
+ * @brief Get the shared I2C master bus handle
+ *
+ * Automatically creates and configures the I2C master bus on the first call.
+ *
+ * @return Shared I2C master bus handle, or NULL if creation failed
+ */
+i2c_master_bus_handle_t sensor_registry_get_i2c_bus(void);
 
 /*=============================================================================
  * SENSOR REGISTRATION MACRO

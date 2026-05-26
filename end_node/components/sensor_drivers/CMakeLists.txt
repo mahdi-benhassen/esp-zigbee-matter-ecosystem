@@ -89,6 +89,8 @@ REQUIRES
     esp_rom
 PRIV_REQUIRES
     freertos
+    esp_driver_gpio
+    esp_driver_uart
 )
 
 # Include math library

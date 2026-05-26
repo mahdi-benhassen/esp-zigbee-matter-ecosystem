@@ -357,23 +357,12 @@ static uint32_t bme280_compensate_humidity(int32_t adc_H)
  */
 static esp_err_t bme280_init(void)
 {
-    ESP_LOGI(TAG, "BME280 init: SDA=GPIO%d, SCL=GPIO%d",
-             CONFIG_SENSOR_I2C_SDA_PIN, CONFIG_SENSOR_I2C_SCL_PIN);
+    ESP_LOGI(TAG, "BME280 init using shared I2C bus");
 
-    /* Create the I2C master bus */
-    i2c_master_bus_config_t bus_config = {
-        .i2c_port = BME280_I2C_PORT,
-        .sda_io_num = CONFIG_SENSOR_I2C_SDA_PIN,
-        .scl_io_num = CONFIG_SENSOR_I2C_SCL_PIN,
-        .clk_source = I2C_CLK_SRC_DEFAULT,
-        .glitch_ignore_cnt = 7,
-        .flags.enable_internal_pullup = true,
-    };
-
-    esp_err_t err = i2c_new_master_bus(&bus_config, &s_i2c_bus);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "I2C bus failed: %s", esp_err_to_name(err));
-        return err;
+    s_i2c_bus = sensor_registry_get_i2c_bus();
+    if (s_i2c_bus == NULL) {
+        ESP_LOGE(TAG, "Failed to get shared I2C bus");
+        return ESP_FAIL;
     }
 
     /*
@@ -382,6 +371,7 @@ static esp_err_t bme280_init(void)
      */
     uint8_t chip_id = 0;
     uint8_t addrs[] = { BME280_I2C_ADDR_PRIMARY, BME280_I2C_ADDR_SECONDARY };
+    esp_err_t err = ESP_FAIL;
 
     for (int i = 0; i < 2; i++) {
         i2c_device_config_t dev_config = {
@@ -412,7 +402,6 @@ static esp_err_t bme280_init(void)
 
     if (s_bme280_dev == NULL) {
         ESP_LOGE(TAG, "BME280 not found on either address");
-        i2c_del_master_bus(s_i2c_bus);
         s_i2c_bus = NULL;
         return ESP_ERR_NOT_FOUND;
     }
@@ -431,7 +420,6 @@ static esp_err_t bme280_init(void)
             ESP_LOGE(TAG, "Calibration read failed");
             i2c_master_bus_rm_device(s_bme280_dev);
             s_bme280_dev = NULL;
-            i2c_del_master_bus(s_i2c_bus);
             s_i2c_bus = NULL;
             return err;
         }
@@ -613,10 +601,7 @@ static esp_err_t bme280_deinit(void)
         i2c_master_bus_rm_device(s_bme280_dev);
         s_bme280_dev = NULL;
     }
-    if (s_i2c_bus) {
-        i2c_del_master_bus(s_i2c_bus);
-        s_i2c_bus = NULL;
-    }
+    s_i2c_bus = NULL;
     s_initialized = false;
     ESP_LOGI(TAG, "BME280 deinitialized");
     return ESP_OK;

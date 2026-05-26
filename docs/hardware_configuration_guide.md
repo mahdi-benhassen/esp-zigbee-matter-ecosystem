@@ -28,7 +28,7 @@ The Universal End Node is built on the ESP32-H2 (e.g., ESP32-H2-DevKitM-1). The 
 | Peripheral Interface         | Pins / Ports                          | Description                               |
 | :---                         | :---                                  | :---                                      |
 | **Sensor Power Gate**        | `GPIO4`                               | Drives the PMOS/VCC rail to power sensors |
-| **I2C Bus (SDA / SCL)**      | `GPIO6` / `GPIO7`                     | Shared bus for BME280, BH1750, SCD41      |
+| **I2C Bus (SDA / SCL)**      | `GPIO6` / `GPIO7`                     | Shared bus for all I2C sensors (BME280, BH1750, VEML7700, SCD41, SHT4x, SHT30, AHT20) |
 | **One-Wire Bus**             | `GPIO5`                               | For DS18B20 Temperature Sensor            |
 | **Soil Moisture ADC**        | `ADC1_CH1` (`GPIO2`)                  | Analog input for soil moisture reading    |
 | **JSN-SR04T (Ultrasonic)**   | Trig: `GPIO0`, Echo: `GPIO1`          | Distance/Level measurement                |

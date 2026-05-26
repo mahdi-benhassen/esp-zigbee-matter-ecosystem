@@ -129,10 +129,11 @@ static bool ow_reset(void)
 /* ========================================================================
  *  1-Wire write / read single bit  –  timing-critical, runs in critical
  * ======================================================================== */
+static portMUX_TYPE s_ow_mux = portMUX_INITIALIZER_UNLOCKED;
+
 static void ow_write_bit(bool bit)
 {
-    portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
-    portENTER_CRITICAL(&mux);
+    portENTER_CRITICAL(&s_ow_mux);
     if (bit) {
         /* Write 1: short low then release */
         ow_write_low();
@@ -146,14 +147,13 @@ static void ow_write_bit(bool bit)
         ow_release();
         esp_rom_delay_us(OW_WRITE0_RELEASE_US);
     }
-    portEXIT_CRITICAL(&mux);
+    portEXIT_CRITICAL(&s_ow_mux);
 }
 
 static bool ow_read_bit(void)
 {
     bool bit = false;
-    portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
-    portENTER_CRITICAL(&mux);
+    portENTER_CRITICAL(&s_ow_mux);
 
     ow_write_low();
     esp_rom_delay_us(OW_READ_INIT_US);
@@ -162,7 +162,7 @@ static bool ow_read_bit(void)
     bit = (ow_read_pin() != 0);
     esp_rom_delay_us(OW_READ_TAIL_US);
 
-    portEXIT_CRITICAL(&mux);
+    portEXIT_CRITICAL(&s_ow_mux);
     return bit;
 }
 
