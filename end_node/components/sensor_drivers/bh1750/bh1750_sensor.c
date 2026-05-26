@@ -92,7 +92,7 @@ static bool s_initialized = false;
  */
 static esp_err_t bh1750_send_cmd(uint8_t cmd)
 {
-    return i2c_master_transmit(s_bh1750_dev, &cmd, 1, -1);
+    return i2c_master_transmit(s_bh1750_dev, &cmd, 1, 1000);
 }
 
 /*=============================================================================
@@ -200,7 +200,7 @@ static esp_err_t bh1750_read(sensor_data_t *data)
      * The BH1750 sends measurement data as a simple I2C read (no register address).
      */
     uint8_t rx_buf[2] = {0};
-    err = i2c_master_receive(s_bh1750_dev, rx_buf, 2, -1);
+    err = i2c_master_receive(s_bh1750_dev, rx_buf, 2, 1000);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failed to read measurement: %s", esp_err_to_name(err));
         return err;

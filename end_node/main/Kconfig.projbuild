@@ -123,20 +123,20 @@ menu "Universal End Node Configuration"
     config SENSOR_I2C_SDA_PIN
         int "I2C SDA GPIO Pin"
         depends on SENSOR_SHT30 || SENSOR_SHT4X || SENSOR_AHT20 || SENSOR_BME280 || SENSOR_BH1750 || SENSOR_VEML7700 || SENSOR_SCD41
-        default 6
-        range 0 31
+        default 8
+        range 0 27
         help
             GPIO pin for I2C SDA (data) line.
-            Common: GPIO6, GPIO4, GPIO0
+            Common: GPIO8, GPIO4, GPIO0
 
     config SENSOR_I2C_SCL_PIN
         int "I2C SCL GPIO Pin"
         depends on SENSOR_SHT30 || SENSOR_SHT4X || SENSOR_AHT20 || SENSOR_BME280 || SENSOR_BH1750 || SENSOR_VEML7700 || SENSOR_SCD41
-        default 7
-        range 0 31
+        default 9
+        range 0 27
         help
             GPIO pin for I2C SCL (clock) line.
-            Common: GPIO7, GPIO5, GPIO1
+            Common: GPIO9, GPIO5, GPIO1
 
     config SENSOR_I2C_FREQ_HZ
         int "I2C Clock Frequency"
@@ -153,7 +153,7 @@ menu "Universal End Node Configuration"
         int "DHT22 Data GPIO Pin"
         depends on SENSOR_DHT22
         default 5
-        range 0 31
+        range 0 27
         help
             GPIO pin connected to DHT22 data line.
             Requires 10K pull-up resistor to 3.3V.
@@ -164,17 +164,17 @@ menu "Universal End Node Configuration"
         int "DS18B20 1-Wire GPIO Pin"
         depends on SENSOR_DS18B20
         default 5
-        range 0 31
+        range 0 27
         help
             GPIO pin connected to DS18B20 1-Wire line.
 
     comment "===== ZE03 NH3 Configuration ====="
 
     config SENSOR_ZE03_UART_PORT
-        int "ZE03 UART Port Number (0-2)"
+        int "ZE03 UART Port Number (0-1)"
         depends on SENSOR_ZE03_NH3
         default 1
-        range 0 2
+        range 0 1
         help
             UART port used to communicate with ZE03 sensor.
 
@@ -182,7 +182,7 @@ menu "Universal End Node Configuration"
         int "ZE03 UART TX GPIO Pin"
         depends on SENSOR_ZE03_NH3
         default 24
-        range 0 31
+        range 0 27
         help
             GPIO pin connected to ZE03 RXD pin.
 
@@ -190,7 +190,7 @@ menu "Universal End Node Configuration"
         int "ZE03 UART RX GPIO Pin"
         depends on SENSOR_ZE03_NH3
         default 23
-        range 0 31
+        range 0 27
         help
             GPIO pin connected to ZE03 TXD pin.
 
@@ -210,8 +210,8 @@ menu "Universal End Node Configuration"
     config SENSOR_JSN_TRIG_PIN
         int "JSN Trig GPIO Pin"
         depends on SENSOR_JSN_SR04T
-        default 0
-        range 0 31
+        default 4
+        range 0 27
         help
             GPIO pin connected to JSN-SR04T Trigger pin.
 
@@ -219,7 +219,7 @@ menu "Universal End Node Configuration"
         int "JSN Echo GPIO Pin"
         depends on SENSOR_JSN_SR04T
         default 1
-        range 0 31
+        range 0 27
         help
             GPIO pin connected to JSN-SR04T Echo pin.
 
@@ -229,7 +229,7 @@ menu "Universal End Node Configuration"
         int "HX711 SCK GPIO Pin"
         depends on SENSOR_HX711
         default 10
-        range 0 31
+        range 0 27
         help
             GPIO pin connected to HX711 clock pin.
 
@@ -237,7 +237,7 @@ menu "Universal End Node Configuration"
         int "HX711 DOUT GPIO Pin"
         depends on SENSOR_HX711
         default 11
-        range 0 31
+        range 0 27
         help
             GPIO pin connected to HX711 data pin.
 

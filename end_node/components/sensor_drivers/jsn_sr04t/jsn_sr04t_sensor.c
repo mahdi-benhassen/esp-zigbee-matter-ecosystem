@@ -56,6 +56,7 @@
  * MODULE STATE
  *============================================================================*/
 static bool s_initialized = false;
+static portMUX_TYPE s_jsn_mux = portMUX_INITIALIZER_UNLOCKED;
 
 /*=============================================================================
  * INIT
@@ -115,10 +116,12 @@ static esp_err_t jsn_sr04t_read(sensor_data_t *data)
     esp_rom_delay_us(JSN_TRIG_HOLD_US);
     gpio_set_level((gpio_num_t)CONFIG_SENSOR_JSN_TRIG_PIN, 0);
 
+    portENTER_CRITICAL(&s_jsn_mux);
     /* ---- 2. Wait for echo to go HIGH (start of return pulse) ---- */
     int64_t wait_start = esp_timer_get_time();
     while (gpio_get_level((gpio_num_t)CONFIG_SENSOR_JSN_ECHO_PIN) == 0) {
         if ((esp_timer_get_time() - wait_start) > JSN_ECHO_TIMEOUT_US) {
+            portEXIT_CRITICAL(&s_jsn_mux);
             ESP_LOGE(TAG, "Echo timeout: never went HIGH");
             return ESP_ERR_TIMEOUT;
         }
@@ -128,11 +131,13 @@ static esp_err_t jsn_sr04t_read(sensor_data_t *data)
     int64_t echo_start = esp_timer_get_time();
     while (gpio_get_level((gpio_num_t)CONFIG_SENSOR_JSN_ECHO_PIN) == 1) {
         if ((esp_timer_get_time() - echo_start) > JSN_ECHO_TIMEOUT_US) {
+            portEXIT_CRITICAL(&s_jsn_mux);
             ESP_LOGE(TAG, "Echo timeout: never went LOW");
             return ESP_ERR_TIMEOUT;
         }
     }
     int64_t echo_end = esp_timer_get_time();
+    portEXIT_CRITICAL(&s_jsn_mux);
 
     int64_t duration_us = echo_end - echo_start;
 
@@ -166,6 +171,7 @@ static esp_err_t jsn_sr04t_read(sensor_data_t *data)
  *============================================================================*/
 static esp_err_t jsn_sr04t_sleep(void)
 {
+    if (!s_initialized) return ESP_ERR_INVALID_STATE;
     /* Drive trigger LOW – ensures no spurious pulses while idle */
     gpio_set_level((gpio_num_t)CONFIG_SENSOR_JSN_TRIG_PIN, 0);
     return ESP_OK;

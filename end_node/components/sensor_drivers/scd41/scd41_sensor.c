@@ -89,7 +89,7 @@ static esp_err_t scd41_send_cmd(uint16_t cmd)
         (uint8_t)(cmd >> 8),
         (uint8_t)(cmd & 0xFF)
     };
-    return i2c_master_transmit(s_scd41_dev, tx_buf, 2, -1);
+    return i2c_master_transmit(s_scd41_dev, tx_buf, 2, 1000);
 }
 
 /* ========================================================================
@@ -187,7 +187,7 @@ static esp_err_t scd41_read(sensor_data_t *data)
 
     /* 5. Read 9 response bytes */
     uint8_t rx_buf[9] = {0};
-    err = i2c_master_receive(s_scd41_dev, rx_buf, sizeof(rx_buf), -1);
+    err = i2c_master_receive(s_scd41_dev, rx_buf, sizeof(rx_buf), 1000);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "I2C receive failed: %s", esp_err_to_name(err));
         return err;

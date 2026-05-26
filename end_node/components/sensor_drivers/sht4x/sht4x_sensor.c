@@ -83,7 +83,7 @@ static esp_err_t sht4x_init(void)
 
     /* Soft reset */
     uint8_t reset_cmd = SHT4X_CMD_SOFT_RESET;
-    i2c_master_transmit(s_sht4x_dev, &reset_cmd, 1, -1);
+    i2c_master_transmit(s_sht4x_dev, &reset_cmd, 1, 1000);
     vTaskDelay(pdMS_TO_TICKS(1));
 
     s_initialized = true;
@@ -96,13 +96,13 @@ static esp_err_t sht4x_read(sensor_data_t *data)
     if (!s_initialized || data == NULL) return ESP_ERR_INVALID_STATE;
 
     uint8_t cmd = SHT4X_CMD_MEAS_HIGH;
-    esp_err_t err = i2c_master_transmit(s_sht4x_dev, &cmd, 1, -1);
+    esp_err_t err = i2c_master_transmit(s_sht4x_dev, &cmd, 1, 1000);
     if (err != ESP_OK) return err;
 
     vTaskDelay(pdMS_TO_TICKS(SHT4X_MEASURE_DELAY_MS));
 
     uint8_t rx_buf[6] = {0};
-    err = i2c_master_receive(s_sht4x_dev, rx_buf, 6, -1);
+    err = i2c_master_receive(s_sht4x_dev, rx_buf, 6, 1000);
     if (err != ESP_OK) return err;
 
     /* CRC check */

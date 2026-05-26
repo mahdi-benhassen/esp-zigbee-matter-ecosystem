@@ -156,7 +156,7 @@ static esp_err_t veml7700_write_reg(uint8_t reg, uint16_t value)
         (uint8_t)(value & 0xFF),        /* LSB first */
         (uint8_t)((value >> 8) & 0xFF)  /* MSB second */
     };
-    return i2c_master_transmit(s_veml7700_dev, buf, 3, -1);
+    return i2c_master_transmit(s_veml7700_dev, buf, 3, 1000);
 }
 
 /**
@@ -168,7 +168,7 @@ static esp_err_t veml7700_write_reg(uint8_t reg, uint16_t value)
 static esp_err_t veml7700_read_reg(uint8_t reg, uint16_t *value)
 {
     uint8_t rx_buf[2] = {0};
-    esp_err_t err = i2c_master_transmit_receive(s_veml7700_dev, &reg, 1, rx_buf, 2, -1);
+    esp_err_t err = i2c_master_transmit_receive(s_veml7700_dev, &reg, 1, rx_buf, 2, 1000);
     if (err != ESP_OK) {
         return err;
     }

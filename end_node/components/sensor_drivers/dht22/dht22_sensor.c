@@ -19,9 +19,10 @@
 #include "sensor_registry.h"
 #include "esp_log.h"
 #include "driver/gpio.h"
-#include "rom/ets_sys.h"
+#include "esp_rom_sys.h"
 #include "freertos/FreeRTOS.h"
 #include "esp_timer.h"
+#include <string.h>
 
 #define TAG "DHT22"
 
@@ -33,26 +34,26 @@
 #define DHT_MAX_TIMINGS         85
 
 static bool s_initialized = false;
-
-/* DHT22 data packet: 5 bytes = humidity[2] + temp[2] + checksum[1] */
-static uint8_t s_dht_data[5] = {0};
+static portMUX_TYPE s_dht_mux = portMUX_INITIALIZER_UNLOCKED;
 
 /**
  * @brief Read DHT22 using bit-banged single-wire protocol
  *
  * Timing-critical: disables interrupts during read.
  */
-static esp_err_t dht22_read_raw(void)
+static esp_err_t dht22_read_raw(uint8_t *data_out)
 {
-    memset(s_dht_data, 0, 5);
+    memset(data_out, 0, 5);
 
     /* Send start signal: pull low for 1ms */
     gpio_set_direction(DHT_GPIO, GPIO_MODE_OUTPUT);
     gpio_set_level(DHT_GPIO, 0);
-    ets_delay_us(1100);
+    esp_rom_delay_us(1100);
     gpio_set_level(DHT_GPIO, 1);
-    ets_delay_us(30);
+    esp_rom_delay_us(30);
     gpio_set_direction(DHT_GPIO, GPIO_MODE_INPUT);
+
+    portENTER_CRITICAL(&s_dht_mux);
 
     /* Wait for DHT response (20-40us low, then 80us high, then 80us low) */
     uint32_t timeout = 0;
@@ -60,22 +61,22 @@ static esp_err_t dht22_read_raw(void)
     /* Wait for DHT to pull low */
     timeout = 0;
     while (gpio_get_level(DHT_GPIO) == 1) {
-        if (++timeout > 100) return ESP_ERR_TIMEOUT;
-        ets_delay_us(1);
+        if (++timeout > 100) { portEXIT_CRITICAL(&s_dht_mux); return ESP_ERR_TIMEOUT; }
+        esp_rom_delay_us(1);
     }
 
     /* Wait for DHT to pull high */
     timeout = 0;
     while (gpio_get_level(DHT_GPIO) == 0) {
-        if (++timeout > 100) return ESP_ERR_TIMEOUT;
-        ets_delay_us(1);
+        if (++timeout > 100) { portEXIT_CRITICAL(&s_dht_mux); return ESP_ERR_TIMEOUT; }
+        esp_rom_delay_us(1);
     }
 
     /* Wait for start of data */
     timeout = 0;
     while (gpio_get_level(DHT_GPIO) == 1) {
-        if (++timeout > 100) return ESP_ERR_TIMEOUT;
-        ets_delay_us(1);
+        if (++timeout > 100) { portEXIT_CRITICAL(&s_dht_mux); return ESP_ERR_TIMEOUT; }
+        esp_rom_delay_us(1);
     }
 
     /* Read 40 bits (5 bytes) */
@@ -84,28 +85,30 @@ static esp_err_t dht22_read_raw(void)
             /* Wait for rising edge */
             timeout = 0;
             while (gpio_get_level(DHT_GPIO) == 0) {
-                if (++timeout > 100) return ESP_ERR_TIMEOUT;
-                ets_delay_us(1);
+                if (++timeout > 100) { portEXIT_CRITICAL(&s_dht_mux); return ESP_ERR_TIMEOUT; }
+                esp_rom_delay_us(1);
             }
 
             /* Measure high duration: ~28us = 0, ~70us = 1 */
             uint32_t high_time = 0;
             while (gpio_get_level(DHT_GPIO) == 1) {
-                if (++high_time > 100) return ESP_ERR_TIMEOUT;
-                ets_delay_us(1);
+                if (++high_time > 100) { portEXIT_CRITICAL(&s_dht_mux); return ESP_ERR_TIMEOUT; }
+                esp_rom_delay_us(1);
             }
 
-            s_dht_data[byte] <<= 1;
+            data_out[byte] <<= 1;
             if (high_time > 40) {
-                s_dht_data[byte] |= 1;
+                data_out[byte] |= 1;
             }
         }
     }
 
+    portEXIT_CRITICAL(&s_dht_mux);
+
     /* Verify checksum */
-    uint8_t checksum = s_dht_data[0] + s_dht_data[1] + s_dht_data[2] + s_dht_data[3];
-    if (checksum != s_dht_data[4]) {
-        ESP_LOGW(TAG, "Checksum failed: calc=0x%02X, rx=0x%02X", checksum, s_dht_data[4]);
+    uint8_t checksum = data_out[0] + data_out[1] + data_out[2] + data_out[3];
+    if (checksum != data_out[4]) {
+        ESP_LOGW(TAG, "Checksum failed: calc=0x%02X, rx=0x%02X", checksum, data_out[4]);
         return ESP_ERR_INVALID_CRC;
     }
 
@@ -123,7 +126,11 @@ static esp_err_t dht22_init(void)
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
         .intr_type = GPIO_INTR_DISABLE,
     };
-    gpio_config(&io_conf);
+    esp_err_t err = gpio_config(&io_conf);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to configure GPIO");
+        return err;
+    }
     gpio_set_level(DHT_GPIO, 1);
 
     /* Wait for sensor to stabilize after power-on */
@@ -136,12 +143,11 @@ static esp_err_t dht22_init(void)
 
 static esp_err_t dht22_read(sensor_data_t *data)
 {
-    if (!s_initialized || data == NULL) return ESP_ERR_INVALID_STATE;
+    if (!s_initialized) return ESP_ERR_INVALID_STATE;
+    if (data == NULL) return ESP_ERR_INVALID_ARG;
 
-    /* DHT22 needs ~2s between reads */
-    vTaskDelay(pdMS_TO_TICKS(2500));
-
-    esp_err_t err = dht22_read_raw();
+    uint8_t dht_data[5];
+    esp_err_t err = dht22_read_raw(dht_data);
     if (err != ESP_OK) {
         ESP_LOGW(TAG, "DHT22 read failed: %s", esp_err_to_name(err));
         return err;
@@ -149,10 +155,10 @@ static esp_err_t dht22_read(sensor_data_t *data)
 
     /* Parse DHT22 data */
     /* Humidity: 16 bits, divide by 10 for decimal */
-    float humidity = (float)(((uint16_t)s_dht_data[0] << 8) | s_dht_data[1]) / 10.0f;
+    float humidity = (float)(((uint16_t)dht_data[0] << 8) | dht_data[1]) / 10.0f;
 
     /* Temperature: 16 bits, MSB is sign */
-    int16_t raw_temp = ((uint16_t)s_dht_data[2] << 8) | s_dht_data[3];
+    int16_t raw_temp = ((uint16_t)dht_data[2] << 8) | dht_data[3];
     float temp_c = (float)(raw_temp & 0x7FFF) / 10.0f;
     if (raw_temp & 0x8000) temp_c = -temp_c;
 
@@ -179,6 +185,8 @@ static esp_err_t dht22_wakeup(void) { return ESP_OK; }
 static esp_err_t dht22_deinit(void)
 {
     s_initialized = false;
+    gpio_set_direction(DHT_GPIO, GPIO_MODE_INPUT);
+    gpio_set_pull_mode(DHT_GPIO, GPIO_FLOATING);
     return ESP_OK;
 }
 

@@ -106,7 +106,7 @@ static esp_err_t sht30_init(void)
 
     /* Soft reset */
     uint8_t reset_cmd[2] = {0x30, 0xA2};
-    i2c_master_transmit(s_sht30_dev, reset_cmd, 2, -1);
+    i2c_master_transmit(s_sht30_dev, reset_cmd, 2, 1000);
     vTaskDelay(pdMS_TO_TICKS(2));
 
     s_initialized = true;
@@ -122,7 +122,7 @@ static esp_err_t sht30_read(sensor_data_t *data)
 
     /* Send measurement command (high repeatability) */
     uint8_t cmd[2] = {0x24, 0x00};
-    esp_err_t err = i2c_master_transmit(s_sht30_dev, cmd, 2, -1);
+    esp_err_t err = i2c_master_transmit(s_sht30_dev, cmd, 2, 1000);
     if (err != ESP_OK) {
         ESP_LOGW(TAG, "Command tx failed: %s", esp_err_to_name(err));
         return err;
@@ -133,7 +133,7 @@ static esp_err_t sht30_read(sensor_data_t *data)
 
     /* Read 6 bytes: T[2] + T_CRC[1] + H[2] + H_CRC[1] */
     uint8_t rx_buf[6] = {0};
-    err = i2c_master_receive(s_sht30_dev, rx_buf, 6, -1);
+    err = i2c_master_receive(s_sht30_dev, rx_buf, 6, 1000);
     if (err != ESP_OK) {
         ESP_LOGW(TAG, "Read failed: %s", esp_err_to_name(err));
         return err;

@@ -16,6 +16,7 @@
 #include "driver/i2c_master.h"
 #include "freertos/FreeRTOS.h"
 #include "esp_timer.h"
+#include <string.h>
 
 #define TAG "AHT20"
 
@@ -48,6 +49,19 @@ static i2c_master_bus_handle_t s_i2c_bus = NULL;
 static i2c_master_dev_handle_t s_aht20_dev = NULL;
 static bool s_initialized = false;
 
+static uint8_t aht20_crc8(const uint8_t *data, int len)
+{
+    uint8_t crc = 0xFF;
+    for (int i = 0; i < len; i++) {
+        crc ^= data[i];
+        for (int j = 0; j < 8; j++) {
+            if (crc & 0x80) crc = (crc << 1) ^ 0x31;
+            else crc <<= 1;
+        }
+    }
+    return crc;
+}
+
 static esp_err_t aht20_init(void)
 {
     ESP_LOGI(TAG, "AHT20 init using shared I2C bus");
@@ -73,21 +87,21 @@ static esp_err_t aht20_init(void)
 
     /* Soft reset */
     uint8_t reset_cmd = AHT20_CMD_SOFT_RESET;
-    i2c_master_transmit(s_aht20_dev, &reset_cmd, 1, -1);
+    i2c_master_transmit(s_aht20_dev, &reset_cmd, 1, 1000);
     vTaskDelay(pdMS_TO_TICKS(20));
 
     /* Initialize */
     uint8_t init_cmd[3] = {0xBE, 0x08, 0x00};
-    i2c_master_transmit(s_aht20_dev, init_cmd, 3, -1);
+    i2c_master_transmit(s_aht20_dev, init_cmd, 3, 1000);
     vTaskDelay(pdMS_TO_TICKS(10));
 
     /* Verify calibration */
     uint8_t status_cmd = AHT20_CMD_STATUS;
     uint8_t status = 0;
-    i2c_master_transmit_receive(s_aht20_dev, &status_cmd, 1, &status, 1, -1);
+    i2c_master_transmit_receive(s_aht20_dev, &status_cmd, 1, &status, 1, 1000);
     if (!(status & AHT20_STATUS_CALIBRATED)) {
         ESP_LOGW(TAG, "AHT20 not calibrated (status=0x%02X), retrying init...", status);
-        i2c_master_transmit(s_aht20_dev, init_cmd, 3, -1);
+        i2c_master_transmit(s_aht20_dev, init_cmd, 3, 1000);
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 
@@ -102,19 +116,33 @@ static esp_err_t aht20_read(sensor_data_t *data)
 
     /* Trigger measurement */
     uint8_t trigger[3] = {0xAC, 0x33, 0x00};
-    esp_err_t err = i2c_master_transmit(s_aht20_dev, trigger, 3, -1);
+    esp_err_t err = i2c_master_transmit(s_aht20_dev, trigger, 3, 1000);
     if (err != ESP_OK) return err;
 
     vTaskDelay(pdMS_TO_TICKS(AHT20_MEASURE_DELAY_MS));
 
     /* Poll for completion */
     uint8_t rx_buf[7] = {0};
-    uint8_t status_cmd = AHT20_CMD_STATUS;
+    bool is_ready = false;
     for (int i = 0; i < 10; i++) {
-        err = i2c_master_transmit_receive(s_aht20_dev, &status_cmd, 1, rx_buf, 7, -1);
+        err = i2c_master_receive(s_aht20_dev, rx_buf, 7, 1000);
         if (err != ESP_OK) return err;
-        if (!(rx_buf[0] & AHT20_STATUS_BUSY)) break;
+        if (!(rx_buf[0] & AHT20_STATUS_BUSY)) {
+            is_ready = true;
+            break;
+        }
         vTaskDelay(pdMS_TO_TICKS(10));
+    }
+
+    if (!is_ready) {
+        ESP_LOGE(TAG, "AHT20 measure timeout");
+        return ESP_ERR_TIMEOUT;
+    }
+
+    /* Verify CRC */
+    if (aht20_crc8(rx_buf, 6) != rx_buf[6]) {
+        ESP_LOGW(TAG, "AHT20 CRC failed");
+        return ESP_ERR_INVALID_CRC;
     }
 
     /* Parse data: status[1], humidity[20 bits], temp[20 bits] */

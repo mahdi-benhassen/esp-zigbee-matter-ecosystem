@@ -140,7 +140,7 @@ static uint8_t s_active_addr = BME280_I2C_ADDR_PRIMARY;
 static esp_err_t bme280_write_reg(uint8_t reg, uint8_t val)
 {
     uint8_t buf[2] = { reg, val };
-    return i2c_master_transmit(s_bme280_dev, buf, 2, -1);
+    return i2c_master_transmit(s_bme280_dev, buf, 2, 1000);
 }
 
 /**
@@ -152,7 +152,7 @@ static esp_err_t bme280_write_reg(uint8_t reg, uint8_t val)
  */
 static esp_err_t bme280_read_regs(uint8_t reg, uint8_t *data, size_t len)
 {
-    return i2c_master_transmit_receive(s_bme280_dev, &reg, 1, data, len, -1);
+    return i2c_master_transmit_receive(s_bme280_dev, &reg, 1, data, len, 1000);
 }
 
 /*=============================================================================
