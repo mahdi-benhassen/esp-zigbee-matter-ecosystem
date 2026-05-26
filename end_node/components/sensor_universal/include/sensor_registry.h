@@ -44,8 +44,12 @@ typedef enum {
     CAP_IAS_ZONE        = (1 << 8), /**< IAS Zone (security sensor) */
     CAP_FLOW            = (1 << 9), /**< Flow Measurement cluster */
     CAP_SOIL_MOISTURE   = (1 << 10),/**< Soil Moisture (analog input) */
-    CAP_CO2             = (1 << 11),/**< CO2 Measurement (analog) */
-    CAP_PM25            = (1 << 12),/**< PM2.5 Measurement (analog) */
+    CAP_CO2             = (1 << 11),/**< CO2 Measurement cluster */
+    CAP_PM25            = (1 << 12),/**< PM2.5 Measurement */
+    CAP_NH3             = (1 << 13),/**< NH3 gas concentration (ppm) */
+    CAP_DISTANCE        = (1 << 14),/**< Ultrasonic distance/depth (cm) */
+    CAP_WEIGHT          = (1 << 15),/**< Load cell weight (kg) */
+    CAP_SOIL_TEMP       = (1 << 16),/**< Soil/root-zone temperature (1-Wire chain) */
 } sensor_capability_t;
 
 /*=============================================================================
@@ -78,6 +82,10 @@ typedef struct {
     sensor_value_t soil_moisture;   /**< Percent 0-100 */
     sensor_value_t co2;             /**< ppm */
     sensor_value_t pm25;            /**< ug/m3 */
+    sensor_value_t nh3;             /**< NH3 concentration (ppm) */
+    sensor_value_t distance;        /**< Distance / depth (cm) */
+    sensor_value_t weight;          /**< Weight (kg) */
+    sensor_value_t soil_temp;       /**< Root-zone / soil temperature (°C) */
 } sensor_data_t;
 
 /** @brief Sensor driver metadata */
@@ -252,6 +260,33 @@ extern const sensor_ops_t internal_sensor_ops;
 #endif
 #ifdef CONFIG_SENSOR_STUB
 extern const sensor_ops_t stub_sensor_ops;
+#endif
+#ifdef CONFIG_SENSOR_BME280
+extern const sensor_ops_t bme280_sensor_ops;
+#endif
+#ifdef CONFIG_SENSOR_BH1750
+extern const sensor_ops_t bh1750_sensor_ops;
+#endif
+#ifdef CONFIG_SENSOR_VEML7700
+extern const sensor_ops_t veml7700_sensor_ops;
+#endif
+#ifdef CONFIG_SENSOR_SCD41
+extern const sensor_ops_t scd41_sensor_ops;
+#endif
+#ifdef CONFIG_SENSOR_DS18B20
+extern const sensor_ops_t ds18b20_sensor_ops;
+#endif
+#ifdef CONFIG_SENSOR_ZE03_NH3
+extern const sensor_ops_t ze03_nh3_sensor_ops;
+#endif
+#ifdef CONFIG_SENSOR_SOIL_MOISTURE
+extern const sensor_ops_t soil_moisture_sensor_ops;
+#endif
+#ifdef CONFIG_SENSOR_JSN_SR04T
+extern const sensor_ops_t jsn_sr04t_sensor_ops;
+#endif
+#ifdef CONFIG_SENSOR_HX711
+extern const sensor_ops_t hx711_sensor_ops;
 #endif
 
 #ifdef __cplusplus

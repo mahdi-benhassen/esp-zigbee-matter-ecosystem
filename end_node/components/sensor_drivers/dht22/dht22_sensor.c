@@ -21,6 +21,7 @@
 #include "driver/gpio.h"
 #include "rom/ets_sys.h"
 #include "freertos/FreeRTOS.h"
+#include "esp_timer.h"
 
 #define TAG "DHT22"
 

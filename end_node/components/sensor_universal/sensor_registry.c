@@ -22,7 +22,7 @@
  *============================================================================*/
 
 /** Max number of sensor slots */
-#define MAX_SENSORS 6
+#define MAX_SENSORS 12
 
 static struct {
     const sensor_ops_t *ops;
@@ -111,6 +111,42 @@ esp_err_t sensor_registry_init(void)
     register_sensor(&internal_sensor_ops);
 #endif
 
+#ifdef CONFIG_SENSOR_BME280
+    register_sensor(&bme280_sensor_ops);
+#endif
+
+#ifdef CONFIG_SENSOR_BH1750
+    register_sensor(&bh1750_sensor_ops);
+#endif
+
+#ifdef CONFIG_SENSOR_VEML7700
+    register_sensor(&veml7700_sensor_ops);
+#endif
+
+#ifdef CONFIG_SENSOR_SCD41
+    register_sensor(&scd41_sensor_ops);
+#endif
+
+#ifdef CONFIG_SENSOR_DS18B20
+    register_sensor(&ds18b20_sensor_ops);
+#endif
+
+#ifdef CONFIG_SENSOR_ZE03_NH3
+    register_sensor(&ze03_nh3_sensor_ops);
+#endif
+
+#ifdef CONFIG_SENSOR_SOIL_MOISTURE
+    register_sensor(&soil_moisture_sensor_ops);
+#endif
+
+#ifdef CONFIG_SENSOR_JSN_SR04T
+    register_sensor(&jsn_sr04t_sensor_ops);
+#endif
+
+#ifdef CONFIG_SENSOR_HX711
+    register_sensor(&hx711_sensor_ops);
+#endif
+
     /* Fallback: if nothing registered, use stub */
 #ifdef CONFIG_SENSOR_STUB
     if (s_sensor_count == 0) {
@@ -173,6 +209,10 @@ esp_err_t sensor_registry_read_all(sensor_data_t *data)
         if (sensor_reading.soil_moisture.valid)data->soil_moisture= sensor_reading.soil_moisture;
         if (sensor_reading.co2.valid)          data->co2          = sensor_reading.co2;
         if (sensor_reading.pm25.valid)         data->pm25         = sensor_reading.pm25;
+        if (sensor_reading.nh3.valid)          data->nh3          = sensor_reading.nh3;
+        if (sensor_reading.distance.valid)     data->distance     = sensor_reading.distance;
+        if (sensor_reading.weight.valid)       data->weight       = sensor_reading.weight;
+        if (sensor_reading.soil_temp.valid)    data->soil_temp    = sensor_reading.soil_temp;
     }
 
     return ESP_OK;
@@ -291,6 +331,29 @@ esp_err_t sensor_data_to_zcl(const sensor_data_t *data, sensor_capability_t cap,
         case CAP_PM25:
             if (!data->pm25.valid) return ESP_ERR_INVALID_STATE;
             *(float *)zcl_value = data->pm25.value.f32;
+            break;
+
+        case CAP_NH3:
+            if (!data->nh3.valid) return ESP_ERR_INVALID_STATE;
+            /* NH3 reported as volume fraction (ppm * 1e-6) */
+            *(float *)zcl_value = data->nh3.value.f32 * 1e-6f;
+            break;
+
+        case CAP_DISTANCE:
+            if (!data->distance.valid) return ESP_ERR_INVALID_STATE;
+            *(uint16_t *)zcl_value = (uint16_t)(data->distance.value.f32);
+            break;
+
+        case CAP_WEIGHT:
+            if (!data->weight.valid) return ESP_ERR_INVALID_STATE;
+            /* Weight reported in grams (kg * 1000) */
+            *(uint32_t *)zcl_value = (uint32_t)(data->weight.value.f32 * 1000.0f);
+            break;
+
+        case CAP_SOIL_TEMP:
+            if (!data->soil_temp.valid) return ESP_ERR_INVALID_STATE;
+            /* Soil temp in ZCL hundredths of degrees C */
+            *(int16_t *)zcl_value = (int16_t)(data->soil_temp.value.f32 * 100.0f);
             break;
 
         default:

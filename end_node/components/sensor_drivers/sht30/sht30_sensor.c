@@ -21,6 +21,7 @@
 #include "esp_log.h"
 #include "driver/i2c_master.h"
 #include "freertos/FreeRTOS.h"
+#include "esp_timer.h"
 
 #define TAG "SHT30"
 
@@ -60,7 +61,7 @@ static i2c_master_dev_handle_t s_sht30_dev = NULL;
 static bool s_initialized = false;
 
 /*=============================================================================
- * CRC8 calculation (SHT30 uses CRC-8 with poly 0x31) */
+ * CRC8 calculation (SHT30 uses CRC-8 with poly 0x31)
  *============================================================================*/
 
 static uint8_t sht30_crc8(const uint8_t *data, uint8_t len)

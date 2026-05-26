@@ -9,7 +9,7 @@ menu "Universal End Node Configuration"
 
     config SENSOR_STUB
         bool "Stub/Simulation (no hardware)"
-        default y if (!SENSOR_SHT30 && !SENSOR_SHT4X && !SENSOR_AHT20 && !SENSOR_DHT22 && !SENSOR_INTERNAL)
+        default y if (!SENSOR_SHT30 && !SENSOR_SHT4X && !SENSOR_AHT20 && !SENSOR_DHT22 && !SENSOR_INTERNAL && !SENSOR_BME280 && !SENSOR_BH1750 && !SENSOR_VEML7700 && !SENSOR_SCD41 && !SENSOR_DS18B20 && !SENSOR_ZE03_NH3 && !SENSOR_SOIL_MOISTURE && !SENSOR_JSN_SR04T && !SENSOR_HX711)
         default n
         help
             Generate simulated sensor data. No hardware required.
@@ -55,11 +55,74 @@ menu "Universal End Node Configuration"
             +/- 0.5C, +/- 2-5% RH. Single GPIO.
             Slower reads (~2s between measurements).
 
+    config SENSOR_BME280
+        bool "Bosch BME280 (I2C)"
+        default n
+        help
+            Bosch BME280 temperature/humidity/pressure sensor.
+            +/- 1.0C, +/- 3% RH, +/- 1 hPa. I2C address 0x76/0x77.
+
+    config SENSOR_BH1750
+        bool "ROHM BH1750 (I2C)"
+        default n
+        help
+            ROHM BH1750FVI digital light/illuminance sensor.
+            1 - 65535 lux. I2C address 0x23.
+
+    config SENSOR_VEML7700
+        bool "Vishay VEML7700 (I2C)"
+        default n
+        help
+            Vishay VEML7700 digital light/illuminance sensor.
+            High resolution, 0 - 120 klux. I2C address 0x10.
+
+    config SENSOR_SCD41
+        bool "Sensirion SCD41 (I2C)"
+        default n
+        help
+            Sensirion SCD41 photoacoustic CO2 sensor.
+            400 - 5000 ppm. I2C address 0x62.
+
+    config SENSOR_DS18B20
+        bool "Maxim DS18B20 (1-Wire)"
+        default n
+        help
+            Maxim DS18B20 digital soil temperature sensor.
+            +/- 0.5C. Single GPIO bit-bang.
+
+    config SENSOR_ZE03_NH3
+        bool "Winsen ZE03-NH3 (UART)"
+        default n
+        help
+            Winsen ZE03 electrochemical ammonia (NH3) sensor.
+            0 - 100 ppm. UART interface.
+
+    config SENSOR_SOIL_MOISTURE
+        bool "Capacitive Soil Moisture (Analog)"
+        default n
+        help
+            Analog capacitive soil moisture sensor.
+            Requires ADC1 channel.
+
+    config SENSOR_JSN_SR04T
+        bool "JSN-SR04T Ultrasonic Distance (GPIO)"
+        default n
+        help
+            JSN-SR04T waterproof ultrasonic distance/depth sensor.
+            20 - 600 cm. Trigger/Echo GPIOs.
+
+    config SENSOR_HX711
+        bool "HX711 Load Cell Weight (GPIO)"
+        default n
+        help
+            HX711 load cell amplifier for weight measurement.
+            2-wire GPIO serial interface.
+
     comment "===== I2C Configuration (for I2C sensors) ====="
 
     config SENSOR_I2C_SDA_PIN
         int "I2C SDA GPIO Pin"
-        depends on SENSOR_SHT30 || SENSOR_SHT4X || SENSOR_AHT20
+        depends on SENSOR_SHT30 || SENSOR_SHT4X || SENSOR_AHT20 || SENSOR_BME280 || SENSOR_BH1750 || SENSOR_VEML7700 || SENSOR_SCD41
         default 6
         range 0 31
         help
@@ -68,7 +131,7 @@ menu "Universal End Node Configuration"
 
     config SENSOR_I2C_SCL_PIN
         int "I2C SCL GPIO Pin"
-        depends on SENSOR_SHT30 || SENSOR_SHT4X || SENSOR_AHT20
+        depends on SENSOR_SHT30 || SENSOR_SHT4X || SENSOR_AHT20 || SENSOR_BME280 || SENSOR_BH1750 || SENSOR_VEML7700 || SENSOR_SCD41
         default 7
         range 0 31
         help
@@ -77,7 +140,7 @@ menu "Universal End Node Configuration"
 
     config SENSOR_I2C_FREQ_HZ
         int "I2C Clock Frequency"
-        depends on SENSOR_SHT30 || SENSOR_SHT4X || SENSOR_AHT20
+        depends on SENSOR_SHT30 || SENSOR_SHT4X || SENSOR_AHT20 || SENSOR_BME280 || SENSOR_BH1750 || SENSOR_VEML7700 || SENSOR_SCD41
         default 100000
         range 50000 400000
         help
@@ -94,6 +157,89 @@ menu "Universal End Node Configuration"
         help
             GPIO pin connected to DHT22 data line.
             Requires 10K pull-up resistor to 3.3V.
+
+    comment "===== DS18B20 Configuration ====="
+
+    config SENSOR_DS18B20_PIN
+        int "DS18B20 1-Wire GPIO Pin"
+        depends on SENSOR_DS18B20
+        default 5
+        range 0 31
+        help
+            GPIO pin connected to DS18B20 1-Wire line.
+
+    comment "===== ZE03 NH3 Configuration ====="
+
+    config SENSOR_ZE03_UART_PORT
+        int "ZE03 UART Port Number (0-2)"
+        depends on SENSOR_ZE03_NH3
+        default 1
+        range 0 2
+        help
+            UART port used to communicate with ZE03 sensor.
+
+    config SENSOR_ZE03_TX_PIN
+        int "ZE03 UART TX GPIO Pin"
+        depends on SENSOR_ZE03_NH3
+        default 24
+        range 0 31
+        help
+            GPIO pin connected to ZE03 RXD pin.
+
+    config SENSOR_ZE03_RX_PIN
+        int "ZE03 UART RX GPIO Pin"
+        depends on SENSOR_ZE03_NH3
+        default 23
+        range 0 31
+        help
+            GPIO pin connected to ZE03 TXD pin.
+
+    comment "===== Soil Moisture Configuration ====="
+
+    config SENSOR_SOIL_ADC_CHANNEL
+        int "Soil Moisture ADC1 Channel"
+        depends on SENSOR_SOIL_MOISTURE
+        default 1
+        range 0 4
+        help
+            ADC1 channel for soil moisture analog voltage.
+            GPIO2 is ADC1 Channel 1 on ESP32-H2.
+
+    comment "===== JSN-SR04T Configuration ====="
+
+    config SENSOR_JSN_TRIG_PIN
+        int "JSN Trig GPIO Pin"
+        depends on SENSOR_JSN_SR04T
+        default 0
+        range 0 31
+        help
+            GPIO pin connected to JSN-SR04T Trigger pin.
+
+    config SENSOR_JSN_ECHO_PIN
+        int "JSN Echo GPIO Pin"
+        depends on SENSOR_JSN_SR04T
+        default 1
+        range 0 31
+        help
+            GPIO pin connected to JSN-SR04T Echo pin.
+
+    comment "===== HX711 Configuration ====="
+
+    config SENSOR_HX711_SCK_PIN
+        int "HX711 SCK GPIO Pin"
+        depends on SENSOR_HX711
+        default 10
+        range 0 31
+        help
+            GPIO pin connected to HX711 clock pin.
+
+    config SENSOR_HX711_DOUT_PIN
+        int "HX711 DOUT GPIO Pin"
+        depends on SENSOR_HX711
+        default 11
+        range 0 31
+        help
+            GPIO pin connected to HX711 data pin.
 
     comment "===== Timing Configuration ====="
 

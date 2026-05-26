@@ -15,6 +15,7 @@
 #include "esp_log.h"
 #include "driver/i2c_master.h"
 #include "freertos/FreeRTOS.h"
+#include "esp_timer.h"
 
 #define TAG "AHT20"
 
